@@ -1,0 +1,118 @@
+type Query {
+    users: [User!]!
+    user(id: ID!): User
+    cards: [Card!]!
+    card(id: ID!): Card
+    battles: [Battle!]!
+    battle(id: ID!): Battle
+}
+
+"""
+User represents a player in the game, including their personal details and game-related information
+such as their collection of cards, their selected deck for battles, and a history of past and current battles participated in.
+"""
+type User {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    username: String!
+    email: String!
+    collection: [Card!]! # Collection of all cards owned by the user
+    deck: [Card!]! # The user's selected deck for battles
+    battles: [Battle!]! # List of past and current battles
+    currentPokeAlert: PokeAlert # The current PokeAlert for the user, null if no active alert
+}
+
+"""
+Card represents an individual card used in the game, detailing its characteristics like
+name, level, health points, type of attack, and rarity.
+"""
+type Card {
+    id: ID!
+    name: String!
+    level: Int! # Level of the card indicating its power
+    hp: Int! # Health points of the card
+    attack: Attack! # The attack associated with the card
+    rarity: String! # Rarity level of the card
+}
+
+"""
+PokeAlert represents a notification about the discovery of a new Pokemon card.
+Each alert is time-sensitive and provides an opportunity for the user to claim the card.
+"""
+type PokeAlert {
+    id: ID!
+    card: Card! # The Pokemon card discovered
+    discoveredAt: String! # Time when the card was discovered
+    expiresAt: String! # Time when the opportunity to claim the card expires
+    claimed: Boolean! # Whether the user has claimed the card
+}
+
+"""
+Attack defines the offensive capability of a card, including the name of the attack
+and the amount of damage it inflicts.
+"""
+type Attack {
+    name: String! # Name of the attack
+    damage: Int! # Damage dealt by the attack
+}
+
+"""
+Battle represents a match between two players in the game, detailing the state of the battle,
+the players involved, the cards they have chosen, and the progression of each round.
+"""
+type Battle {
+    id: ID!
+    state: BattleState! # Current state of the battle
+    playerOne: User! # Initiator of the battle request
+    playerTwo: User! # Responder to the battle request
+    playerOneCards: [BattleCard!]! # Player One's chosen cards
+    playerTwoCards: [BattleCard!]! # Player Two's chosen cards, set post-acceptance
+    rounds: [Round!]! # Sequential rounds of the battle
+    winner: User # Winner of the battle, null if undecided/tie
+}
+
+"""
+Round represents an individual round within a battle, capturing the cards played by each player
+and whether they have viewed the results of that round.
+"""
+type Round {
+    playerOneCard: PlayedCard # Player One's selected card, null if pending
+    playerTwoCard: PlayedCard # Player Two's selected card, null if pending
+    playerOneViewed: Boolean! # Indicates if Player One viewed round results
+    playerTwoViewed: Boolean! # Indicates if Player Two viewed round results
+}
+
+"""
+BattleCard reflects the state of a specific card chosen by a player for use in a battle,
+including its current health points and status (alive or dead).
+"""
+type BattleCard {
+    id: ID!
+    card: Card!
+    currentHp: Int! # Current HP, card is 'dead' if HP is 0
+    isDead: Boolean! # True if card is out of play
+}
+
+"""
+PlayedCard represents the state of a card as it is played in a particular round,
+showing its health at the start and end of that round.
+"""
+type PlayedCard {
+    battleCard: BattleCard!
+    roundStartHp: Int! # HP at round start
+    roundEndHp: Int # HP at round end, null if round incomplete
+}
+
+"""
+BattleState enumerates the various states a battle can be in, from its initiation
+to conclusion, whether by completion, tie, or forfeiture.
+"""
+enum BattleState {
+    REQUESTED # Battle requested, awaiting response
+    REJECTED # Battle request rejected
+    ACTIVE # Battle accepted and ongoing
+    COMPLETED # Battle ended with a winner
+    TIED # Battle ended in a tie
+    FORFEITED # Battle forfeited by a player
+}
