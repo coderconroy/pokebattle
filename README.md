@@ -22,9 +22,6 @@ PokéBattle QuickPlay is an online Pokémon battle platform that combines elemen
 
 ## Folder Structure
 - `/client`: Contains the Vue.js frontend application.
-  - `/components`: Vue components (e.g., Login, Battle, Dashboard).
-  - `/store`: Vuex store for state management.
-  - `/router`: Vue Router for navigation.
 - `/server`: Node.js and Express backend.
   - `/graphql`: GraphQL schema and resolvers.
   - `/models`: PostgreSQL database models.
