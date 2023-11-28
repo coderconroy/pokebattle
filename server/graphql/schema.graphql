@@ -1,10 +1,42 @@
+"""
+The Query type is the root level type for all read operations in the GraphQL API.
+"""
 type Query {
-    users: [User!]!
-    user(id: ID!): User
-    cards: [Card!]!
-    card(id: ID!): Card
-    battles: [Battle!]!
-    battle(id: ID!): Battle
+    # Implemented queries
+    users: [User!]! # Retrieves a list of all users
+    user(id: ID!): User # Retrieves a specific user by ID
+    cards: [Card!]! # Fetches all cards available in the game
+    card(id: ID!): Card # Retrieves detailed information about a specific card
+    battles: [Battle!]! # Gathers information on all battles
+    battle(id: ID!): Battle # Fetches detailed information about a particular battle
+
+    # Additional queries:
+    pokeAlert(userId: ID!): PokeAlert # Retrieves a specific PokeAlert by user ID
+    userBattles(userId: ID!): [Battle!]! # Queries for battles involving a specific user
+    userCollection(userId: ID!): [Card!]! # Provides a list of all cards in a user's collection
+}
+
+"""
+The Mutation type is used for creating, updating, and deleting data in the GraphQL API.
+"""
+type Mutation {
+    # High priority
+    createUser(firstName: String!, lastName: String!, username: String!, email: String!): User!
+    
+    requestBattle(requesterId: ID!, recipientId: ID!): Battle!
+    acceptBattle(battleId: ID!, userId: ID!): Battle!
+    rejectBattle(battleId: ID!, userId: ID!): Battle!
+    viewBattle(battleId: ID!, userId: ID!): Battle!
+    playCardInBattle(battleId: ID!, userId: ID!, battleCardId: ID!): Battle!
+    forfeitBattle(battleId: ID!, userId: ID!): Battle!
+
+    # Medium priority
+    claimPokeAlert(pokeAlertId: ID!): PokeAlert # Claims a PokeAlert
+    deletePokeAlert(pokeAlertId: ID!): Boolean # Deletes a PokeAlert
+
+    # Low Priority
+    updateUser(id: ID!, firstName: String, lastName: String, username: String, email: String): User
+    deleteUser(id: ID!): Boolean
 }
 
 """
@@ -21,6 +53,7 @@ type User {
     deck: [Card!]! # The user's selected deck for battles
     battles: [Battle!]! # List of past and current battles
     currentPokeAlert: PokeAlert # The current PokeAlert for the user, null if no active alert
+    # TODO: Include password / passwordHash
 }
 
 """
