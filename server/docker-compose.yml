@@ -1,0 +1,35 @@
+version: '3.9'
+services:
+  # server: 
+  #   image: node:20
+  #   restart: always
+  #   working_dir: /usr/src/app
+  #   volumes:
+  #     - ./:/usr/src/app/
+  #   command: bash -c "npm install -g nodemon && nodemon server.js"
+  #   ports:
+  #     - 3000:3000
+  #   networks:
+  #     default:
+  #       ipv4_address: 192.168.92.10
+
+  db:
+    image: mongo:latest
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - 27017:27017
+    networks:
+      default:
+        ipv4_address: 192.168.92.11
+
+volumes:
+  mongo_data:
+
+networks:
+  default:
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.92.0/24"
