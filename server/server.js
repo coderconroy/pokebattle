@@ -7,7 +7,9 @@ const { ApolloServerPluginDrainHttpServer } = require("@apollo/server/plugin/dra
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
-const fs = require('fs');
+const fs = require("fs");
+const { SECRET_KEY } = require('./config/config');
+const jwt = require("jsonwebtoken");
 
 // Read GraphQL schema and resolvers
 const { resolvers } = require("./graphql/resolvers");
@@ -30,14 +32,14 @@ class DataSourceJson {
         this.config = DataSourceJson._loadConfig(configFile);
         const uri = `mongodb://${this.config.host}:${this.config.port}`;
         this.client = new MongoClient(uri);
-        console.log()
+        console.log();
     }
 
     async init_db() {
         try {
             this._db = this.client.db(this.config.db);
             // Ensure the 'id' field is unique in the 'card' collection
-            await this._db.collection("card").createIndex({ "id": 1 }, { unique: true });
+            await this._db.collection("card").createIndex({ id: 1 }, { unique: true });
         } catch (err) {
             console.error(`Mongo DB Connection Error -- ${err}`);
             process.exit(5);
@@ -49,18 +51,18 @@ class DataSourceJson {
             console.error(`File not found: ${filePath}`);
             return;
         }
-    
+
         try {
             const fileContent = fs.readFileSync(filePath, "utf8");
             const cards = JSON.parse(fileContent);
-            const bulkOps = cards.map(card => ({
+            const bulkOps = cards.map((card) => ({
                 updateOne: {
                     filter: { id: card.id },
                     update: { $set: card },
-                    upsert: true
-                }
+                    upsert: true,
+                },
             }));
-    
+
             await this._db.collection("card").bulkWrite(bulkOps);
             console.log(`Processed ${cards.length} cards from ${filePath}`);
         } catch (err) {
@@ -90,23 +92,26 @@ class DataSourceJson {
         return null;
     }
 
-    async createUser({ firstName, lastName, username, email }) {
+    async createUser({ firstName, lastName, username, email, passwordHash }) {
         // Create new user
         const user = {
             firstName: firstName,
             lastName: lastName,
             username: username,
-            email: email
+            email: email,
+            passwordHash: passwordHash,
         };
 
         // Add user to collection
-        const { insertedId: _id } = await this._db.collection("user").insertOne(user);
+        const { insertedId } = await this._db.collection("user").insertOne(user);
 
-        if (!_id) {
-            throw new Error(`Error creating user -- data:${data}`);
+        if (!insertedId) {
+            throw new Error(`Error creating user.`);
         }
 
-        return _id.toString();
+        user.id = insertedId.toString();
+
+        return user;
     }
 
     async getUsers() {
@@ -117,8 +122,20 @@ class DataSourceJson {
 
     async getCards() {
         const cards = await this._db.collection("card").find().toArray();
-        cards.map((card) => DataSourceJson._decorateUser(card));
+        cards.map((card) => DataSourceJson._decorateCard(card));
         return cards ? cards : [];
+    }
+
+    async getUserByUsername(username) {
+        if (!username) return null;
+        const user = await this._db.collection("user").findOne({ username: username });
+        return user ? DataSourceJson._decorateUser(user) : null;
+    }
+
+    async getUserByEmail(email) {
+        if (!email) return null;
+        const user = await this._db.collection("user").findOne({ email: email });
+        return user ? DataSourceJson._decorateUser(user) : null;
     }
 
     static _decorateUser(user) {
@@ -165,12 +182,32 @@ const datasource = new DataSourceJson("./config/mongo.json");
 
     // Set express middleware to handle CORS, body parsing and expressMiddleware function.
     const graphqlPath = "/graphql";
+
     app.use(
         graphqlPath,
         cors(),
         express.json(),
         expressMiddleware(apolloServer, {
-            context: async ({ req }) => ({ token: req.headers.token }),
+            context: async ({ req }) => {
+                let user = null;
+
+                const token = req.headers.authorization?.replace('Bearer ', '');
+
+                if (token) {
+                    try {
+                        user = jwt.verify(token, SECRET_KEY);
+                    } catch (error) {
+                        // If there's an error (e.g., token is invalid), user remains null
+                    }
+                }
+
+                console.log(user);
+    
+                return {
+                    currentUser: user,
+                    ds: datasource,
+                };
+            },
         })
     );
 
@@ -178,7 +215,7 @@ const datasource = new DataSourceJson("./config/mongo.json");
     await datasource.init_db();
 
     // Import card data
-    const exts = ['p', '1', '2', '3', '4', '5', '6'];
+    const exts = ["p", "1", "2", "3", "4", "5", "6"];
     for (let i = 0; i < exts.length; i++) {
         await datasource.importCardsFromFile(`./data/base${exts[i]}.json`);
     }
