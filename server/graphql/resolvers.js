@@ -1,68 +1,28 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { ObjectId } = require("mongodb");
+const BattleState = require("../enums/BattleState");
 
-const { SECRET_KEY } = require('../config/config');
+const { SECRET_KEY } = require("../config/config");
 
-const cards = [
-    {
-        id: "c1",
-        name: "Pikachu",
-        level: 5,
-        hp: 35,
-        attack: { name: "Thunderbolt", damage: 40 },
-        rarity: "Rare",
-    },
-    // ... add more cards
-];
+async function verifyCurrentUser(ds, currentUser) {
+    // Check if user is logged in
+    if (!currentUser || !currentUser.id) {
+        throw new Error("No user is currently logged in or user ID is missing");
+    }
 
-const users = [
-    {
-        id: "1",
-        firstName: "Ash",
-        lastName: "Ketchum",
-        username: "pikachu_master",
-        email: "ash@example.com",
-        collection: ["c1"], // Assuming Pikachu is in Ash's collection
-        deck: ["c1"], // Assuming Pikachu is also in Ash's deck
-        battles: [], // Will be populated later
-        currentPokeAlert: null, // No active PokeAlert for simplicity
-    },
-    {
-        id: "2",
-        firstName: "Misty",
-        lastName: "Williams",
-        username: "waterqueen",
-        email: "misty@example.com",
-        collection: ["c1"], // Reference card IDs in the collection
-        deck: ["c1"], // Reference card IDs in the deck
-        battles: [],
-        currentPokeAlert: null, // Assuming Misty has no current PokeAlert
-    },
-    // ... add more users
-];
+    // Check if user exists in database
+    const user = await ds.getUser(currentUser.id);
+    if (!user) {
+        throw new Error("Currently logged in user does not exist in database");
+    }
 
-const battles = [
-    {
-        id: "b1",
-        state: "ACTIVE",
-        playerOne: users[0],
-        playerTwo: users[1],
-        playerOneCards: [], // Assuming no cards selected yet
-        playerTwoCards: [],
-        rounds: [],
-        winner: null,
-    },
-    // ... add more battles
-];
-
-// Adding this battle to users' battle lists
-users[0].battles.push(battles[0]);
-users[1].battles.push(battles[0]);
+    return user;
+}
 
 const resolvers = {
     Query: {
-        // Implemented with dummy data
-        currentUser: async (_, __, {ds, currentUser}) => {
+        currentUser: async (_, __, { ds, currentUser }) => {
             // Check if user is logged in
             if (!currentUser) {
                 return null;
@@ -76,17 +36,24 @@ const resolvers = {
 
             return user;
         },
-        users: () => users,
-        user: (_, { id }) => users.find((user) => user.id === id),
-        cards: () => cards,
-        card: (_, { id }) => cards.find((card) => card.id === id),
-        battles: () => battles,
-        battle: (_, { id }) => battles.find((battle) => battle.id === id),
+        users: async (_, __, { ds }) => {
+            return await ds.getUsers();
+        },
+        user: (_, { id }) => {},
+        card: (_, { id }) => {},
+        battle: async (_, { id }, { ds }) => {
+            const battle = await ds.getBattle(id);
 
+            if (!battle) {
+                throw new Error("Battle not found");
+            }
+
+            return battle;
+        },
         // Stubs
-        pokeAlert: (_, { userId }) => null,
-        userBattles: (_, { userId }) => [],
-        userCollection: (_, { userId }) => [],
+        pokeAlert: (_, __, { ds, currentUser }) => null,
+        userBattles: (_, __, { ds, currentUser }) => [],
+        userCollection: (_, __, { ds, currentUser }) => [],
     },
     Mutation: {
         // Stubs
@@ -106,12 +73,31 @@ const resolvers = {
             // Hash password
             const passwordHash = await bcrypt.hash(password, 10);
 
+            // Load card ids from database
+            const cards = await ds.getCards();
+            const cardIds = cards.map((card) => card.id);
+
+            // Randomly select 10 distinct cards for the collection and 6 of those for the deck
+            const collectionIds = [];
+            while (collectionIds.length < 10) {
+                const randomIndex = Math.floor(Math.random() * cardIds.length);
+                const cardId = cardIds[randomIndex];
+                if (!collectionIds.includes(cardId)) {
+                    collectionIds.push(cardId);
+                }
+            }
+            const deckIds = collectionIds.slice(0, 6);
+
+            console.log(deckIds[0]);
+
             // Add user to database
             const user = await ds.createUser({
                 firstName: firstName,
                 lastName: lastName,
                 username: username,
                 email: email,
+                collectionIds: collectionIds,
+                deckIds: deckIds,
                 passwordHash: passwordHash,
             });
 
@@ -127,21 +113,121 @@ const resolvers = {
                 throw new Error("Username does not exist");
             }
 
-            if (user && await bcrypt.compare(password, user.passwordHash)) {
+            if (user && (await bcrypt.compare(password, user.passwordHash))) {
                 const token = jwt.sign({ id: user.id }, SECRET_KEY);
                 return { token, user };
             } else {
-                throw new Error('Invalid credentials');
+                throw new Error("Invalid credentials");
             }
         },
-        requestBattle: (_, { userId }) => {},
-        acceptBattle: (_, { userId }) => {},
-        claimPokeAlert: (_, { pokeAlertId }) => {},
-        deletePokeAlert: (_, { pokeAlertId }) => true,
+        requestBattle: async (_, { userId }, { ds, currentUser }) => {
+            // Verify current user and get both user details
+            const requestingUser = await verifyCurrentUser(ds, currentUser);
+            const requestedUser = await ds.getUser(userId);
+
+            // Verify players are two different users
+            if (requestingUser.id === requestedUser.id) {
+                throw new Error("Cannot request battle with onself");
+            }
+
+            // Verify requested user exists
+            if (!requestedUser) {
+                throw new Error("Requested user does not exist");
+            }
+
+            // Initialize requesting players cards
+            const cards = await ds.getCardsByIds(requestingUser.deckIds);
+            const playerOneCards = cards.map((card) => ({
+                id: new ObjectId(),
+                cardId: card.id,
+                currentHp: parseInt(card.hp),
+                isDead: false,
+            }));
+
+            // Create battle
+            const battle = await ds.createBattle({
+                playerOneId: requestingUser.id,
+                playerTwoId: requestedUser.id,
+                playerOneCards: playerOneCards,
+            });
+
+            return battle;
+        },
+        acceptBattle: async (_, { battleId }, { ds, currentUser }) => {
+            // Verify current user
+            const acceptingUser = await verifyCurrentUser(ds, currentUser);
+
+            // Retrieve the battle from the database
+            const battle = await ds.getBattle(battleId);
+
+            // Verify the battle exists
+            if (!battle) {
+                throw new Error("Battle not found");
+            }
+
+            // Verify that the accepting user is the challenged user
+            if (battle.playerTwoId !== acceptingUser.id) {
+                throw new Error("User is not the challenged player in this battle");
+            }
+
+            // Verify that the battle is in the REQUESTED state
+            if (battle.state !== BattleState.REQUESTED) {
+                throw new Error("Battle must be in REQUESTED state to be accepted");
+            }
+
+            // Initialize accepting player's cards (player two)
+            // Assuming playerTwo's deck is set and available
+            const cards = await ds.getCardsByIds(acceptingUser.deckIds);
+            const playerTwoCards = cards.map((card) => ({
+                id: new ObjectId(),
+                cardId: card.id,
+                currentHp: parseInt(card.hp),
+                isDead: false,
+            }));
+
+            // Update the battle state to ACTIVE and set playerTwoCards
+            const updatedBattle = await ds.updateBattle(battleId, {
+                state: BattleState.ACTIVE,
+                playerTwoCards: playerTwoCards,
+            });
+
+            return updatedBattle;
+        },
+        rejectBattle: async (_, { battleId }, { ds, currentUser }) => {
+            // Verify current user
+            const rejectingUser = await verifyCurrentUser(ds, currentUser);
+
+            // Retrieve the battle from the database
+            const battle = await ds.getBattle(battleId);
+
+            // Verify the battle exists
+            if (!battle) {
+                throw new Error("Battle not found");
+            }
+
+            // Verify that the rejecting user is the challenged user
+            if (battle.playerTwoId !== rejectingUser.id) {
+                throw new Error("User is not the challenged player in this battle");
+            }
+
+            // Verify that the battle is in the REQUESTED state
+            if (battle.state !== BattleState.REQUESTED) {
+                throw new Error("Battle must be in REQUESTED state to be rejected");
+            }
+
+            // Update the battle state to REJECTED
+            const updatedBattle = await ds.updateBattle(battleId, {
+                state: BattleState.REJECTED,
+            });
+
+            return updatedBattle;
+        },
         updateUser: (_, { id, firstName, lastName, username, email }) => {},
         viewBattle: (_, { battleId }) => {},
         playCardInBattle: (_, { battleId, battleCardId }) => {},
         forfeitBattle: (_, { battleId }) => {},
+        claimPokeAlert: (_, { pokeAlertId }) => {},
+        deletePokeAlert: (_, { pokeAlertId }) => true,
     },
     AuthPayload: {
         // Assuming AuthPayload contains token and user
@@ -149,13 +235,22 @@ const resolvers = {
         user: (authPayload) => authPayload.user,
     },
     User: {
-        // Implemented with dummy data
-        collection: (user) => user.collection.map((cardId) => cards.find((card) => card.id === cardId)),
-        deck: (user) => user.deck.map((cardId) => cards.find((card) => card.id === cardId)),
-        battles: (user) => user.battles,
+        collection: async (user, _, { ds }) => {
+            if (!user.collectionIds || user.collectionIds.length === 0) {
+                return [];
+            }
+            return await ds.getCardsByIds(user.collectionIds);
+        },
+        deck: async (user, _, { ds }) => {
+            if (!user.deckIds || user.deckIds.length === 0) {
+                return [];
+            }
+            return await ds.getCardsByIds(user.deckIds);
+        },
+        battles: (user) => {
+            return [];
+        },
         currentPokeAlert: (user) => user.currentPokeAlert,
-        // Other fields like 'id', 'firstName', 'lastName', 'username', and 'email' do not need resolvers
-        // as they can be resolved directly from the User object returned by other resolvers
     },
     Card: {
         id: (card) => card.id,
@@ -164,6 +259,7 @@ const resolvers = {
         hp: (card) => card.hp,
         attack: (card) => card.attack,
         rarity: (card) => card.rarity,
+        images: (card) => card.images,
     },
     Attack: {
         name: (attack) => attack.name,
@@ -181,7 +277,6 @@ const resolvers = {
         claimed: (pokeAlert) => pokeAlert.claimed,
     },
     Battle: {
-        // Implemented with dummy data
         playerOne: (battle) => battle.playerOne,
         playerTwo: (battle) => battle.playerTwo,
         playerOneCards: (battle) => battle.playerOneCards,

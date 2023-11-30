@@ -8,8 +8,9 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const fs = require("fs");
-const { SECRET_KEY } = require('./config/config');
+const { SECRET_KEY } = require("./config/config");
 const jwt = require("jsonwebtoken");
+const BattleState = require("./enums/BattleState");
 
 // Read GraphQL schema and resolvers
 const { resolvers } = require("./graphql/resolvers");
@@ -54,8 +55,19 @@ class DataSourceJson {
 
         try {
             const fileContent = fs.readFileSync(filePath, "utf8");
-            const cards = JSON.parse(fileContent);
-            const bulkOps = cards.map((card) => ({
+            const allCards = JSON.parse(fileContent);
+
+            // Filter cards based on conditions
+            // 1. Pokemon supertype must be "Pokémon"
+            // 2. Must have at least one attack with non-empty damage
+            const filteredCards = allCards.filter(
+                (card) =>
+                    card.supertype === "Pokémon" &&
+                    card.attacks &&
+                    card.attacks.some((attack) => attack.damage && attack.damage.trim() !== "")
+            );
+
+            const bulkOps = filteredCards.map((card) => ({
                 updateOne: {
                     filter: { id: card.id },
                     update: { $set: card },
@@ -64,7 +76,7 @@ class DataSourceJson {
             }));
 
             await this._db.collection("card").bulkWrite(bulkOps);
-            console.log(`Processed ${cards.length} cards from ${filePath}`);
+            console.log(`Processed ${filteredCards.length} Pokémon cards from ${filePath}`);
         } catch (err) {
             console.error(`Error importing cards from file -- ${err}`);
         }
@@ -72,33 +84,31 @@ class DataSourceJson {
 
     async getUser(id) {
         if (!id) return null;
-        const users = await this.getUsers();
-        for (let i = 0; i < users.length; i++) {
-            if (id === users[i].id) {
-                return users[i];
-            }
-        }
-        return null;
+        const user = await this._db.collection("user").findOne({ _id: new ObjectId(id) });
+        return user ? DataSourceJson._decorateUser(user) : null;
     }
 
     async getCard(id) {
         if (!id) return null;
-        const cards = await this.getCards();
-        for (let i = 0; i < cards.length; i++) {
-            if (id === cards[i].id) {
-                return cards[i];
-            }
-        }
-        return null;
+        const card = await this._db.collection("card").findOne({ _id: new ObjectId(id) });
+        return card ? DataSourceJson._decorateCard(card) : null;
     }
 
-    async createUser({ firstName, lastName, username, email, passwordHash }) {
+    async getBattle(id) {
+        if (!id) return null;
+        const battle = await this._db.collection("battle").findOne({ _id: new ObjectId(id) });
+        return battle ? DataSourceJson._decorateBattle(battle) : null;
+    }
+
+    async createUser({ firstName, lastName, username, email, collectionIds, deckIds, passwordHash }) {
         // Create new user
         const user = {
             firstName: firstName,
             lastName: lastName,
             username: username,
             email: email,
+            collectionIds: collectionIds,
+            deckIds: deckIds,
             passwordHash: passwordHash,
         };
 
@@ -114,6 +124,27 @@ class DataSourceJson {
         return user;
     }
 
+    async createBattle({ playerOneId, playerTwoId, playerOneCards }) {
+        // Create new battle
+        const battle = {
+            state: BattleState.REQUESTED,
+            playerOneId: playerOneId,
+            playerTwoId: playerTwoId,
+            playerOneCards: playerOneCards,
+        };
+
+        // Add battle to collection
+        const { insertedId } = await this._db.collection("battle").insertOne(battle);
+
+        if (!insertedId) {
+            throw new Error(`Error creating battle.`);
+        }
+
+        battle.id = insertedId.toString();
+
+        return battle;
+    }
+
     async getUsers() {
         const users = await this._db.collection("user").find().toArray();
         users.map((user) => DataSourceJson._decorateUser(user));
@@ -122,6 +153,19 @@ class DataSourceJson {
 
     async getCards() {
         const cards = await this._db.collection("card").find().toArray();
+        cards.map((card) => DataSourceJson._decorateCard(card));
+        return cards ? cards : [];
+    }
+
+    async getCardsByIds(cardIds) {
+        cardIds = cardIds.map((id) => new ObjectId(id));
+        const cards = await this._db
+            .collection("card")
+            .find({
+                _id: { $in: cardIds },
+            })
+            .toArray();
+
         cards.map((card) => DataSourceJson._decorateCard(card));
         return cards ? cards : [];
     }
@@ -138,14 +182,41 @@ class DataSourceJson {
         return user ? DataSourceJson._decorateUser(user) : null;
     }
 
+    // TODO: Continue here with no battle being found even though passed battle id is correct
+    async updateBattle( battleId, { state, playerTwoCards }) {
+        // Only include defined fields in update data
+        const updateData = {
+            ...(state && { state }),
+            ...(playerTwoCards && { playerTwoCards }),
+        };
+
+        const updatedBattle = await this._db
+            .collection("battle")
+            .findOneAndUpdate({ _id: new ObjectId(battleId) }, { $set: updateData }, { returnDocument: "after" });
+
+        if (!updatedBattle) {
+            throw new Error("No battle found with the provided ID");
+        }
+
+        console.log(updatedBattle);
+
+        return DataSourceJson._decorateBattle(updatedBattle);
+    }
+
     static _decorateUser(user) {
         user.id = user._id.toString();
         return user;
     }
 
+    // TODO: Consider issues from existing card id. Since card is never updated this may not be a problem
     static _decorateCard(card) {
-        // card.id = card._id.toString();
+        card.id = card._id.toString();
         return card;
+    }
+
+    static _decorateBattle(battle) {
+        battle.id = battle._id.toString();
+        return battle;
     }
 
     static _loadConfig(configFile) {
@@ -191,7 +262,7 @@ const datasource = new DataSourceJson("./config/mongo.json");
             context: async ({ req }) => {
                 let user = null;
 
-                const token = req.headers.authorization?.replace('Bearer ', '');
+                const token = req.headers.authorization?.replace("Bearer ", "");
 
                 if (token) {
                     try {
@@ -201,8 +272,6 @@ const datasource = new DataSourceJson("./config/mongo.json");
                     }
                 }
 
-                console.log(user);
-    
                 return {
                     currentUser: user,
                     ds: datasource,
