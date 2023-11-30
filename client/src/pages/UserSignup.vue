@@ -78,7 +78,7 @@ export default {
         onDone(({ data }) => {
             token.value = data.signup.token;
             // Handle post-signup logic (e.g., redirecting the user)
-            router.push({ name: '/home' });
+            router.push({ name: 'home' });
         });
 
         onError((error) => {
@@ -88,7 +88,23 @@ export default {
 
         // Submit handler
         const onSubmit = () => {
-            mutate({ variables: userData.value });
+            if (
+                !userData.value.firstName ||
+                !userData.value.lastName ||
+                !userData.value.username ||
+                !userData.value.email ||
+                !userData.value.password
+            ) {
+                errorMessage.value = 'Please fill in all the required fields.';
+                return; // Do not proceed with the signup if validation fails
+            }
+            mutate({
+                firstName: userData.value.firstName,
+                lastName: userData.value.lastName,
+                username: userData.value.username,
+                email: userData.value.email,
+                password: userData.value.password,
+            });
         };
 
         return { onSubmit, token, userData, errorMessage };
@@ -137,6 +153,11 @@ export default {
     border-radius: 5px;
     border: 1px solid #ccc;
     font-size: 16px;
+}
+
+.error-message {
+  font-weight: bold;
+  color: black;
 }
 
 .signup-button {

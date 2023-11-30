@@ -5,13 +5,19 @@
           <img src="../assets/pokemon_logo.png" alt="Pokémon Logo" class="logo">
           <!-- <h2>Welcome</h2> -->
         </div>
-        <form class="login-form">
+        <form class="login-form" @submit.prevent="onSubmit">
+          <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+
           <div class="form-group">
-            <input type="text" placeholder="Enter your email" class="form-control" />
+              <input type="text" placeholder="Enter your username" class="form-control" v-model="userData.username" />
           </div>
+
+          <!-- <div class="form-group">
+            <input type="text" placeholder="Enter your email" class="form-control" v-model="userData.email" />
+          </div> -->
   
           <div class="form-group">
-            <input type="password" placeholder="Enter your password" class="form-control" />
+            <input type="password" placeholder="Enter your password" class="form-control" v-model="userData.password" />
           </div>
 
           <div class="forgot-password">
@@ -30,9 +36,60 @@
     </div>
   </template>
   
-  <script>
+<script>
+import gql from "graphql-tag";
+import { ref } from "vue";
+import { useMutation } from "@vue/apollo-composable";
+import { useRouter } from 'vue-router';
+
+const LOGIN_MUTATION = gql`
+    mutation ($username: String!, $password: String!) {
+        login(username: $username, password: $password) {
+            token
+            user {
+                username
+            }
+        }
+    }
+`;
+
   export default {
-    name: 'PokemonLogin'
+    name: 'PokemonLogin',
+    setup() {
+        const userData = ref({
+            username: '',
+            // email: '',
+            password: '',
+        });
+        let token = ref("");
+        const errorMessage = ref(null);
+        const router = useRouter(); // Get the router instance
+
+        const { mutate, onDone, onError } = useMutation(LOGIN_MUTATION);
+
+        // Handling the response
+        onDone(({ data }) => {
+            token.value = data.login.token;
+            // Handle post-login logic (e.g., redirecting the user)
+            router.push({ name: 'home' });
+        });
+
+        onError((error) => {
+            // Extract and set the error message
+            errorMessage.value = error.message || 'An error occurred during login.';
+        });
+
+        // Submit handler
+        const onSubmit = () => {
+            mutate({
+                username: userData.value.username,
+                // email: userData.value.email,
+                password: userData.value.password,
+            });
+        };
+
+        return { onSubmit, token, userData, errorMessage };
+    },
   };
   </script>
   
@@ -80,6 +137,11 @@
     border: 1px solid #ccc;
     font-size: 16px;
   }
+
+  .error-message {
+  font-weight: bold;
+  color: black;
+}
   
   .forgot-password {
   text-align: center; /* Center the link */
