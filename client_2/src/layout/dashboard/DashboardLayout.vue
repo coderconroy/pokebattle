@@ -9,7 +9,24 @@
           name="Card Collection"
           icon="ti-view-list-alt"
         />
-        <sidebar-link to="/battle-page" name="Battle Page" icon="ti-game" />
+        <drop-down
+          class="nav-item"
+          title="BATTLE PAGE"
+          title-classes="nav-link"
+          icon="ti-game"
+        >
+        <a class="dropdown-item" href="/battle-page">Active Battle Page</a>
+        </drop-down>
+        <!-- <div class="dropdown">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="ti-game"></i> Battle Page
+          </button>
+          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <a class="dropdown-item" href="/battle-page">Active Battle Page</a>
+
+          </div>
+        </div> -->
+        <!-- <sidebar-link to="/battle-page" name="Battle Page" icon="ti-game" /> -->
         <sidebar-link to="/notifications" name="Notifications" icon="ti-bell" />
         <sidebar-link to="/poke-discovered" name="Poke Discovered" icon="ti-gift" />
       </template>
@@ -52,7 +69,21 @@
 </template>
 
 
-<style lang="scss"></style>
+<style lang="scss" scoped>
+
+  .nav-link {
+    font-weight: bold; /* Makes the text bold */
+  }
+
+.btn-secondary.dropdown-toggle {
+  background-color: transparent; /* Removes background color */
+  border: none; /* Removes border */
+  box-shadow: none; /* Removes box shadow */
+  display: inline-block; /* Ensures that the dropdown can be centered as text */
+  align-items: center;
+}
+
+</style>
 
 
 <script>

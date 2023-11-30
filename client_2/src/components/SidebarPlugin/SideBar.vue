@@ -135,4 +135,11 @@ export default {
 
 
 
-<style></style>
+<style>
+.sidebar { /* Replace with your actual sidebar class if different */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* other styles */
+}
+</style>

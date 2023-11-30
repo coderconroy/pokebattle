@@ -1,6 +1,6 @@
 import FormGroupInput from "./Inputs/formGroupInput.vue";
 
-import DropDown from "./Dropdown.vue";
+import DropDown from "./DropDown.vue";
 import PaperTable from "./PaperTable.vue";
 import Button from "./Button";
 

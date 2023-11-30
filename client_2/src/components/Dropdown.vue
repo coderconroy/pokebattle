@@ -4,7 +4,7 @@
     class="dropdown"
     :class="{ show: isOpen }"
     @click="toggleDropDown"
-    @click-outside="closeDropDown"
+    v-click-outside="closeDropDown"
   >
     <a
       class="dropdown-toggle btn-rotate"
@@ -22,6 +22,7 @@
     </ul>
   </component>
 </template>
+
 
 <script>
 export default {
@@ -42,31 +43,41 @@ export default {
   methods: {
     toggleDropDown() {
       this.isOpen = !this.isOpen;
-      this.$emit("change-open-state", this.isOpen);
     },
     closeDropDown() {
       this.isOpen = false;
-      this.$emit("change-open-state", false);
     },
   },
   directives: {
     clickOutside: {
-      beforeMount(el, binding, vnode) {
+      beforeMount(el, binding) {
         el.clickOutsideEvent = function(event) {
+          // Check if click was outside the el and its children
           if (!(el === event.target || el.contains(event.target))) {
-            vnode.context[binding.expression](event);
+            // Invoke the method directly
+            binding.value(event);
           }
         };
-        document.body.addEventListener('click', el.clickOutsideEvent)
+        document.body.addEventListener('click', el.clickOutsideEvent);
       },
       unmounted(el) {
-        document.body.removeEventListener('click', el.clickOutsideEvent)
+        document.body.removeEventListener('click', el.clickOutsideEvent);
       },
     },
   },
 };
 </script>
 
+
 <style>
-/* Add your dropdown styles here */
+.dropdown {
+  position: relative; /* Ensures the dropdown menu is positioned relative to this container */
+}
+
+.dropdown-menu {
+  position: absolute; /* Absolutely position the dropdown menu */
+  left: 50%; /* Move to 50% of the parent's width */
+  transform: translateX(-50%); /* Pull back to the left by half of its own width */
+  /* Add other styles like width, background, etc., as necessary */
+}
 </style>
