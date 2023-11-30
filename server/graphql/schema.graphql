@@ -6,9 +6,7 @@ type Query {
     currentUser: User # Returns user currently logged in, else null
     users: [User!]! # Retrieves a list of all users
     user(id: ID!): User # Retrieves a specific user by ID
-    cards: [Card!]! # Fetches all cards available in the game
     card(id: ID!): Card # Retrieves detailed information about a specific card
-    battles: [Battle!]! # Gathers information on all battles
     battle(id: ID!): Battle # Fetches detailed information about a particular battle
 
     # Additional queries:
