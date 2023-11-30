@@ -136,13 +136,13 @@ const resolvers = {
 
             // Initialize requesting players cards
             const deckIds = requestingUser.collection
-            .filter((colCard) => colCard.inDeck)
-            .map((colCard) => colCard.cardId);
+                .filter((colCard) => colCard.inDeck)
+                .map((colCard) => colCard.cardId);
             const cards = await ds.getCardsByIds(deckIds);
             const playerOneCards = cards.map((card) => ({
                 id: new ObjectId(),
                 cardId: card.id,
-                currentHp: parseInt(card.hp),
+                currentHp: card.hp,
                 isDead: false,
             }));
 
@@ -185,14 +185,23 @@ const resolvers = {
             const playerTwoCards = cards.map((card) => ({
                 id: new ObjectId(),
                 cardId: card.id,
-                currentHp: parseInt(card.hp),
+                currentHp: card.hp,
                 isDead: false,
             }));
 
-            // Update the battle state to ACTIVE and set playerTwoCards
+            // Initialize the first round
+            const firstRound = {
+                playerOneCard: null, // No card played yet
+                playerTwoCard: null, // No card played yet
+                playerOneViewed: false,
+                playerTwoViewed: false,
+            };
+
+            // Update the battle state to ACTIVE, set playerTwoCards, and add first round
             const updatedBattle = await ds.updateBattle(battleId, {
                 state: BattleState.ACTIVE,
                 playerTwoCards: playerTwoCards,
+                rounds: [firstRound],
             });
 
             return updatedBattle;
@@ -226,12 +235,146 @@ const resolvers = {
 
             return updatedBattle;
         },
-        updateUser: (_, { id, firstName, lastName, username, email }) => {},
         viewBattle: (_, { battleId }) => {},
-        playCardInBattle: (_, { battleId, battleCardId }) => {},
+        playCardInBattle: async (_, { battleId, battleCardId }, { ds, currentUser }) => {
+            // Verify current user
+            const user = await verifyCurrentUser(ds, currentUser);
+
+            // Retrieve the battle from the database
+            const battle = await ds.getBattle(battleId);
+
+            // Check if the battle exists
+            if (!battle) {
+                throw new Error("Battle not found");
+            }
+
+            // Check if the battle is in the ACTIVE state
+            if (battle.state !== BattleState.ACTIVE) {
+                throw new Error("Battle is not active");
+            }
+
+            // Identify the current round (the last round in the array)
+            const currentRound = battle.rounds[battle.rounds.length - 1];
+
+            // Check if the current round is already complete
+            if (currentRound.playerOneCard && currentRound.playerTwoCard) {
+                throw new Error("Current round is already complete");
+            }
+
+            // Determine if the current user is playerOne or playerTwo
+            const isPlayerOne = battle.playerOneId === user.id;
+            const isPlayerTwo = battle.playerTwoId === user.id;
+
+            if (!isPlayerOne && !isPlayerTwo) {
+                throw new Error("User is not a participant in this battle");
+            }
+
+            // Update the current round with the played card
+            const playedCard = { battleCardId: battleCardId };
+            if (isPlayerOne && !currentRound.playerOneCard) {
+                // Get and validate the battle card
+                const battleCard = battle.playerOneCards.find((battleCard) => battleCard.id === battleCardId);
+                if (!battleCard) {
+                    throw new Error("Battle card not found in playerOneCards");
+                }
+                if (battleCard.isDead) {
+                    throw new Error("Card cannot be played since it is dead");
+                }
+                currentRound.playerOneCard = playedCard;
+            } else if (isPlayerTwo && !currentRound.playerTwoCard) {
+                // Get and validate the battle card
+                const battleCard = battle.playerTwoCards.find((battleCard) => battleCard.id === battleCardId);
+                if (!battleCard) {
+                    throw new Error("Battle card not found in playerTwoCards");
+                }
+                if (battleCard.isDead) {
+                    throw new Error("Card cannot be played since it is dead");
+                }
+                currentRound.playerTwoCard = playedCard;
+            } else {
+                throw new Error("You have already played a card this round");
+            }
+
+            // If both players have played their cards, resolve the round
+            if (currentRound.playerOneCard && currentRound.playerTwoCard) {
+                // Get the battle cards
+                const playerOneBattleCard = battle.playerOneCards.find(
+                    (battleCard) => battleCard.id === currentRound.playerOneCard.battleCardId
+                );
+                const playerTwoBattleCard = battle.playerTwoCards.find(
+                    (battleCard) => battleCard.id === currentRound.playerTwoCard.battleCardId
+                );
+
+                // Get the actual cards to find out the damage
+                const playerOneCard = await ds.getCard(playerOneBattleCard.cardId);
+                const playerTwoCard = await ds.getCard(playerTwoBattleCard.cardId);
+
+                // Set round start HPs
+                currentRound.playerOneCard.roundStartHp = playerOneBattleCard.currentHp;
+                currentRound.playerTwoCard.roundStartHp = playerTwoBattleCard.currentHp;
+
+                // Apply damage to each card
+                playerTwoBattleCard.currentHp -= playerOneCard.attack.damage;
+                playerOneBattleCard.currentHp -= playerTwoCard.attack.damage;
+
+                // Check if any card is dead
+                if (playerOneBattleCard.currentHp <= 0) {
+                    playerOneBattleCard.currentHp = 0;
+                    playerOneBattleCard.isDead = true;
+                }
+                if (playerTwoBattleCard.currentHp <= 0) {
+                    playerTwoBattleCard.currentHp = 0;
+                    playerTwoBattleCard.isDead = true;
+                }
+
+                // Set round end HPs
+                currentRound.playerOneCard.roundEndHp = playerOneBattleCard.currentHp;
+                currentRound.playerTwoCard.roundEndHp = playerTwoBattleCard.currentHp;
+
+                // Record that the player who played second has viewed the round result
+                if (isPlayerOne) currentRound.playerOneViewed = true;
+                else currentRound.playerTwoViewed = true;
+
+                // Check if battle is over
+                const playerOneRemainCards = battle.playerOneCards.filter((card) => !card.isDead).length;
+                const playerTwoRemainCards = battle.playerTwoCards.filter((card) => !card.isDead).length;
+
+                if (playerOneRemainCards === 0 && playerTwoRemainCards === 0) {
+                    battle.state = BattleState.TIED;
+                } else if (playerOneRemainCards === 0) {
+                    battle.state = BattleState.COMPLETED;
+                    battle.winnerId = battle.playerTwoId;
+                } else if (playerTwoRemainCards === 0) {
+                    battle.state = BattleState.COMPLETED;
+                    battle.winnerId = battle.playerOneId;
+                } else {
+                    // Create a new round
+                    const newRound = {
+                        playerOneCard: null,
+                        playerTwoCard: null,
+                        playerOneViewed: false,
+                        playerTwoViewed: false,
+                    };
+                    battle.rounds.push(newRound);
+                }
+            }
+
+            // Update the battle in the database
+            await ds.updateBattle(battleId, {
+                state: battle.state,
+                playerOneCards: battle.playerOneCards, // Update currentHp and isDead
+                playerTwoCards: battle.playerTwoCards, // Update currentHp and isDead
+                rounds: battle.rounds,
+                winnerId: battle.winnerId,
+            });
+
+            // Return the updated battle
+            return await ds.getBattle(battleId);
+        },
         forfeitBattle: (_, { battleId }) => {},
         claimPokeAlert: (_, { pokeAlertId }) => {},
         deletePokeAlert: (_, { pokeAlertId }) => true,
+        updateUser: (_, { id, firstName, lastName, username, email }) => {},
     },
     AuthPayload: {
         // Assuming AuthPayload contains token and user
@@ -308,12 +451,12 @@ const resolvers = {
             if (!battle.playerTwoId) {
                 throw new Error("Player Two ID is missing in the battle");
             }
-    
+
             const playerTwo = await ds.getUser(battle.playerTwoId);
             if (!playerTwo) {
                 throw new Error("Player Two not found");
             }
-    
+
             return playerTwo;
         },
         playerOneCards: async (battle, _, { ds }) => {
@@ -321,19 +464,21 @@ const resolvers = {
             if (!battle.playerOneCards || battle.playerOneCards.length === 0) {
                 return [];
             }
-    
+
             // Map through playerOneCards array
-            const battleCards = await Promise.all(battle.playerOneCards.map(async (battleCard) => {
-                // Fetch the card details for each cardId
-                const card = await ds.getCard(battleCard.cardId);
-                return {
-                    id: battleCard.id,
-                    card: card,
-                    currentHp: battleCard.currentHp,
-                    isDead: battleCard.isDead
-                };
-            }));
-    
+            const battleCards = await Promise.all(
+                battle.playerOneCards.map(async (battleCard) => {
+                    // Fetch the card details for each cardId
+                    const card = await ds.getCard(battleCard.cardId);
+                    return {
+                        id: battleCard.id,
+                        card: card,
+                        currentHp: battleCard.currentHp,
+                        isDead: battleCard.isDead,
+                    };
+                })
+            );
+
             return battleCards;
         },
         playerTwoCards: async (battle, _, { ds }) => {
@@ -341,23 +486,28 @@ const resolvers = {
             if (!battle.playerTwoCards || battle.playerTwoCards.length === 0) {
                 return [];
             }
-    
+
             // Map through playerTwoCards array
-            const battleCards = await Promise.all(battle.playerTwoCards.map(async (battleCard) => {
-                // Fetch the card details for each cardId
-                const card = await ds.getCard(battleCard.cardId);
-                return {
-                    id: battleCard.id,
-                    card: card,
-                    currentHp: battleCard.currentHp,
-                    isDead: battleCard.isDead
-                };
-            }));
-    
+            const battleCards = await Promise.all(
+                battle.playerTwoCards.map(async (battleCard) => {
+                    // Fetch the card details for each cardId
+                    const card = await ds.getCard(battleCard.cardId);
+                    return {
+                        id: battleCard.id,
+                        card: card,
+                        currentHp: battleCard.currentHp,
+                        isDead: battleCard.isDead,
+                    };
+                })
+            );
+
             return battleCards;
         },
-        rounds: (battle) => [],
-        winner: (battle) => null,
+        rounds: async (battle) => battle.rounds, // Complete
+        winner: async (battle, _, { ds }) => {
+            if (!battle.winnerId) return null;
+            return await ds.getUser(battle.winnerId);
+        },
     },
     Round: {
         playerOneCard: (round) => round.playerOneCard,
@@ -367,14 +517,20 @@ const resolvers = {
     },
     BattleCard: {
         id: (battleCard) => battleCard.id,
-        card: (battleCard) => battleCard.card,
+        card: async (battleCard, _, { ds }) => {
+            // TODO: Identify why two battleCard versions arrive here
+            if (battleCard.cardId) return await ds.getCard(battleCard.cardId);
+            else return battleCard.card;
+        },
         currentHp: (battleCard) => battleCard.currentHp,
         isDead: (battleCard) => battleCard.isDead,
     },
     PlayedCard: {
-        battleCard: (playedCard) => playedCard.battleCard,
-        roundStartHp: (playedCard) => playedCard.roundStartHp,
-        roundEndHp: (playedCard) => playedCard.roundEndHp,
+        battleCard: async (playedCard, _, { ds }) => {
+            return await ds.getBattleCard(playedCard.battleCardId);
+        },
+        roundStartHp: (playedCard) => playedCard.roundStartHp, // Complete
+        roundEndHp: (playedCard) => playedCard.roundEndHp, // Complete
     },
 };
 

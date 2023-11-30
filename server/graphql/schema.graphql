@@ -25,15 +25,15 @@ type Mutation {
     requestBattle(userId: ID!): Battle! # Initiates a battle request with another user
     acceptBattle(battleId: ID!): Battle! # Accepts a battle request
     rejectBattle(battleId: ID!): Battle! # Rejects a battle request
+    playCardInBattle(battleId: ID!, battleCardId: ID!): Battle! # Plays a card in an ongoing battle
 
     # Not implemented
     viewBattle(battleId: ID!): Battle! # Views the details of a specific battle
-    playCardInBattle(battleId: ID!, battleCardId: ID!): Battle! # Plays a card in an ongoing battle
     forfeitBattle(battleId: ID!): Battle! # Forfeits an ongoing battle
     claimPokeAlert(pokeAlertId: ID!): PokeAlert # Claims a PokeAlert
     deletePokeAlert(pokeAlertId: ID!): Boolean # Deletes a PokeAlert
     updateUser(id: ID!, firstName: String, lastName: String, username: String, email: String): User # Updates the details of a user
-    updateUserDeck: User! # Updates the user's deck
+    updateUserDeck(cardIds: [ID!]!): User! # Updates the user's deck
 }
 
 """
@@ -154,7 +154,7 @@ showing its health at the start and end of that round.
 """
 type PlayedCard {
     battleCard: BattleCard!
-    roundStartHp: Int! # HP at round start
+    roundStartHp: Int # HP at round start, null if round incomplete
     roundEndHp: Int # HP at round end, null if round incomplete
 }
 

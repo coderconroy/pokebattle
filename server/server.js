@@ -33,7 +33,6 @@ class DataSourceJson {
         this.config = DataSourceJson._loadConfig(configFile);
         const uri = `mongodb://${this.config.host}:${this.config.port}`;
         this.client = new MongoClient(uri);
-        console.log();
     }
 
     async init_db() {
@@ -145,27 +144,27 @@ class DataSourceJson {
     }
 
     async getUsers() {
-        const users = await this._db.collection("user").find().toArray();
-        users.map((user) => DataSourceJson._decorateUser(user));
+        let users = await this._db.collection("user").find().toArray();
+        users = users.map((user) => DataSourceJson._decorateUser(user));
         return users ? users : [];
     }
 
     async getCards() {
-        const cards = await this._db.collection("card").find().toArray();
-        cards.map((card) => DataSourceJson._decorateCard(card));
+        let cards = await this._db.collection("card").find().toArray();
+        cards = cards.map((card) => DataSourceJson._decorateCard(card));
         return cards ? cards : [];
     }
 
     async getCardsByIds(cardIds) {
         cardIds = cardIds.map((id) => new ObjectId(id));
-        const cards = await this._db
+        let cards = await this._db
             .collection("card")
             .find({
                 _id: { $in: cardIds },
             })
             .toArray();
 
-        cards.map((card) => DataSourceJson._decorateCard(card));
+        cards = cards.map((card) => DataSourceJson._decorateCard(card));
         return cards ? cards : [];
     }
 
@@ -183,35 +182,83 @@ class DataSourceJson {
 
     async getUserBattles(userId) {
         if (!userId) return null;
-        const battles = await this._db.collection("battle").find({
-            $or: [
-                { playerOneId: userId },
-                { playerTwoId: userId }
-            ]
-        }).toArray();
+        const battles = await this._db
+            .collection("battle")
+            .find({
+                $or: [{ playerOneId: userId }, { playerTwoId: userId }],
+            })
+            .toArray();
 
-        return battles.map(battle => DataSourceJson._decorateBattle(battle));
+        return battles.map((battle) => DataSourceJson._decorateBattle(battle));
     }
 
     // TODO: Continue here with no battle being found even though passed battle id is correct
-    async updateBattle( battleId, { state, playerTwoCards }) {
+    async updateBattle(battleId, { state, playerOneCards, playerTwoCards, rounds, winnerId }) {
         // Only include defined fields in update data
-        const updateData = {
+        const battle = {
             ...(state && { state }),
+            ...(playerOneCards && { playerOneCards }),
             ...(playerTwoCards && { playerTwoCards }),
+            ...(rounds && { rounds }),
+            ...(winnerId && { winnerId }),
         };
+
+        // Convert each playerOneCard's ID from string to ObjectId
+        if (battle.playerOneCards && Array.isArray(battle.playerOneCards)) {
+            battle.playerOneCards = battle.playerOneCards.map((card) => ({
+                ...card,
+                id: new ObjectId(card.id),
+            }));
+        }
+
+        // Convert each playerTwoCard's ID from string to ObjectId
+        if (battle.playerTwoCards && Array.isArray(battle.playerTwoCards)) {
+            battle.playerTwoCards = battle.playerTwoCards.map((card) => ({
+                ...card,
+                id: new ObjectId(card.id),
+            }));
+        }
 
         const updatedBattle = await this._db
             .collection("battle")
-            .findOneAndUpdate({ _id: new ObjectId(battleId) }, { $set: updateData }, { returnDocument: "after" });
+            .findOneAndUpdate({ _id: new ObjectId(battleId) }, { $set: battle }, { returnDocument: "after" });
 
         if (!updatedBattle) {
             throw new Error("No battle found with the provided ID");
         }
 
-        console.log(updatedBattle);
-
         return DataSourceJson._decorateBattle(updatedBattle);
+    }
+
+    async getBattleCard(battleCardId) {
+        if (!battleCardId) return null;
+
+        // Convert battleCardId to ObjectId
+        const battleCardObjectId = new ObjectId(battleCardId);
+
+        // Find the battle that contains the battle card
+        const battle = await this._db.collection("battle").findOne({
+            $or: [
+                { "playerOneCards.id": battleCardObjectId },
+                { "playerTwoCards.id": battleCardObjectId }
+            ]
+        });
+
+        if (!battle) {
+            throw new Error("No battle containing a battle card with the given id found")
+        };
+
+        // Extract the battle card from playerOneCards or playerTwoCards
+        const battleCard = 
+            battle.playerOneCards.find(card => card.id.equals(battleCardObjectId)) ||
+            battle.playerTwoCards.find(card => card.id.equals(battleCardObjectId));
+
+        return battleCard ? DataSourceJson._decorateBattleCard(battleCard) : null;
+    }
+
+    static _decorateBattleCard(battleCard) {
+        battleCard.id = battleCard.id.toString();
+        return battleCard;
     }
 
     static _decorateUser(user) {
@@ -221,12 +268,49 @@ class DataSourceJson {
 
     // TODO: Consider issues from existing card id. Since card is never updated this may not be a problem
     static _decorateCard(card) {
-        card.id = card._id.toString();
-        return card;
+        // Get first valid attack
+        const firstValidAttack = card.attacks.find((attack) => attack.damage.trim() !== "");
+        const attack = firstValidAttack
+            ? { name: firstValidAttack.name, damage: parseInt(firstValidAttack.damage) }
+            : null;
+
+        if (!attack) {
+            throw new Error(`No valid attack found for card with id: ${card._id}`);
+        }
+
+        // Create decorated card
+        const decoratedCard = {
+            id: card._id.toString(),
+            name: card.name,
+            level: parseInt(card.level),
+            hp: parseInt(card.hp),
+            attack: attack,
+            rarity: card.rarity,
+            images: card.images,
+        };
+
+        return decoratedCard;
     }
 
     static _decorateBattle(battle) {
         battle.id = battle._id.toString();
+
+        // Convert each playerOneCard's ID from ObjectId to string
+        if (battle.playerOneCards && Array.isArray(battle.playerOneCards)) {
+            battle.playerOneCards = battle.playerOneCards.map((card) => ({
+                ...card,
+                id: card.id.toString(), // Assuming card.id is an ObjectId
+            }));
+        }
+
+        // Convert each playerTwoCard's ID from ObjectId to string
+        if (battle.playerTwoCards && Array.isArray(battle.playerTwoCards)) {
+            battle.playerTwoCards = battle.playerTwoCards.map((card) => ({
+                ...card,
+                id: card.id.toString(), // Assuming card.id is an ObjectId
+            }));
+        }
+
         return battle;
     }
 
