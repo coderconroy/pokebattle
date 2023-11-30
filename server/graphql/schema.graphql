@@ -2,14 +2,14 @@
 The Query type is the root level type for all read operations in the GraphQL API.
 """
 type Query {
-    # Implemented queries
+    # Implemented
     currentUser: User # Returns user currently logged in, else null
     users: [User!]! # Retrieves a list of all users
-    user(id: ID!): User # Retrieves a specific user by ID
-    card(id: ID!): Card # Retrieves detailed information about a specific card
     battle(id: ID!): Battle # Fetches detailed information about a particular battle
 
-    # Additional queries:
+    # Not implemented
+    user(id: ID!): User # Retrieves a specific user by ID
+    card(id: ID!): Card # Retrieves detailed information about a specific card
     pokeAlert: PokeAlert # Retrieves a specific PokeAlert by user ID
     userBattles: [Battle!]! # Queries for battles involving a specific user
     userCollection: [Card!]! # Provides a list of all cards in a user's collection
@@ -19,32 +19,31 @@ type Query {
 The Mutation type is used for creating, updating, and deleting data in the GraphQL API.
 """
 type Mutation {
-    # High priority
-    signup(firstName: String!, lastName: String!, username: String!, email: String!, password: String!): AuthPayload!
-    login(username: String!, password: String!): AuthPayload!
-    
-    requestBattle(userId: ID!): Battle!
-    acceptBattle(battleId: ID!): Battle!
-    rejectBattle(battleId: ID!): Battle!
-    viewBattle(battleId: ID!): Battle!
-    playCardInBattle(battleId: ID!, battleCardId: ID!): Battle!
-    forfeitBattle(battleId: ID!): Battle!
+    # Implemented
+    signup(firstName: String!, lastName: String!, username: String!, email: String!, password: String!): AuthPayload! # Registers a new user with the provided details
+    login(username: String!, password: String!): AuthPayload! # Authenticates a user and returns an authentication payload
+    requestBattle(userId: ID!): Battle! # Initiates a battle request with another user
+    acceptBattle(battleId: ID!): Battle! # Accepts a battle request
+    rejectBattle(battleId: ID!): Battle! # Rejects a battle request
 
-    # Medium priority
+    # Not implemented
+    viewBattle(battleId: ID!): Battle! # Views the details of a specific battle
+    playCardInBattle(battleId: ID!, battleCardId: ID!): Battle! # Plays a card in an ongoing battle
+    forfeitBattle(battleId: ID!): Battle! # Forfeits an ongoing battle
     claimPokeAlert(pokeAlertId: ID!): PokeAlert # Claims a PokeAlert
     deletePokeAlert(pokeAlertId: ID!): Boolean # Deletes a PokeAlert
-
-    # Low Priority
-    updateUser(id: ID!, firstName: String, lastName: String, username: String, email: String): User
-
-    # To implement
-    updateUserDeck: User!
+    updateUser(id: ID!, firstName: String, lastName: String, username: String, email: String): User # Updates the details of a user
+    updateUserDeck: User! # Updates the user's deck
 }
 
+"""
+AuthPayload provides authentication-related information following a successful signup or login operation, including a token for session management and user details.
+"""
 type AuthPayload {
-    token: String!
-    user: User!
+    token: String! # Authentication token for the session
+    user: User! # Details of the authenticated user
 }
+
 
 """
 User represents a player in the game, including their personal details and game-related information
@@ -56,8 +55,7 @@ type User {
     lastName: String!
     username: String!
     email: String!
-    collection: [Card!]! # Collection of all cards owned by the user
-    deck: [Card!]! # The user's selected deck for battles
+    collection: [CollectionCard!]! # Collection of all cards owned by the user
     battles: [Battle!]! # List of past and current battles
     currentPokeAlert: PokeAlert # The current PokeAlert for the user, null if no active alert
 }
@@ -75,6 +73,7 @@ type Card {
     rarity: String! # Rarity level of the card
     images: Images!
 }
+
 """
 Attack defines the offensive capability of a card, including the name of the attack
 and the amount of damage it inflicts.
@@ -84,9 +83,12 @@ type Attack {
     damage: Int! # Damage dealt by the attack
 }
 
+"""
+Images provides URLs for different sizes of the card's images, typically used for display in various contexts within the application.
+"""
 type Images {
-    small: String!
-    large: String!
+    small: String! # URL for a smaller version of the card image
+    large: String! # URL for a larger version of the card image
 }
 
 """
@@ -99,6 +101,14 @@ type PokeAlert {
     discoveredAt: String! # Time when the card was discovered
     expiresAt: String! # Time when the opportunity to claim the card expires
     claimed: Boolean! # Whether the user has claimed the card
+}
+
+"""
+CollectionCard represents a card in the user's collection, indicating whether it is included in their current deck.
+"""
+type CollectionCard {
+    card: Card! # The card in the user's collection
+    inDeck: Boolean! # Indicates whether the card is currently in the user's deck
 }
 
 """

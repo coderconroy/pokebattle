@@ -100,15 +100,14 @@ class DataSourceJson {
         return battle ? DataSourceJson._decorateBattle(battle) : null;
     }
 
-    async createUser({ firstName, lastName, username, email, collectionIds, deckIds, passwordHash }) {
+    async createUser({ firstName, lastName, username, email, collection, passwordHash }) {
         // Create new user
         const user = {
             firstName: firstName,
             lastName: lastName,
             username: username,
             email: email,
-            collectionIds: collectionIds,
-            deckIds: deckIds,
+            collection,
             passwordHash: passwordHash,
         };
 
@@ -180,6 +179,18 @@ class DataSourceJson {
         if (!email) return null;
         const user = await this._db.collection("user").findOne({ email: email });
         return user ? DataSourceJson._decorateUser(user) : null;
+    }
+
+    async getUserBattles(userId) {
+        if (!userId) return null;
+        const battles = await this._db.collection("battle").find({
+            $or: [
+                { playerOneId: userId },
+                { playerTwoId: userId }
+            ]
+        }).toArray();
+
+        return battles.map(battle => DataSourceJson._decorateBattle(battle));
     }
 
     // TODO: Continue here with no battle being found even though passed battle id is correct

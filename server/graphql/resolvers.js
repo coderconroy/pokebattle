@@ -75,20 +75,20 @@ const resolvers = {
 
             // Load card ids from database
             const cards = await ds.getCards();
-            const cardIds = cards.map((card) => card.id);
 
-            // Randomly select 10 distinct cards for the collection and 6 of those for the deck
-            const collectionIds = [];
-            while (collectionIds.length < 10) {
-                const randomIndex = Math.floor(Math.random() * cardIds.length);
-                const cardId = cardIds[randomIndex];
-                if (!collectionIds.includes(cardId)) {
-                    collectionIds.push(cardId);
+            // Randomly select 10 distinct cards for the collection and select the first 6 for the deck
+            const collection = [];
+            while (collection.length < 10) {
+                const randomIndex = Math.floor(Math.random() * cards.length);
+                const cardId = cards[randomIndex].id;
+                let containsCard = collection.some((collectionCard) => collectionCard.cardId === cardId);
+                if (!containsCard) {
+                    collection.push({
+                        cardId: cardId,
+                        inDeck: collection.length < 6,
+                    });
                 }
             }
-            const deckIds = collectionIds.slice(0, 6);
-
-            console.log(deckIds[0]);
 
             // Add user to database
             const user = await ds.createUser({
@@ -96,8 +96,7 @@ const resolvers = {
                 lastName: lastName,
                 username: username,
                 email: email,
-                collectionIds: collectionIds,
-                deckIds: deckIds,
+                collection: collection,
                 passwordHash: passwordHash,
             });
 
@@ -136,7 +135,10 @@ const resolvers = {
             }
 
             // Initialize requesting players cards
-            const cards = await ds.getCardsByIds(requestingUser.deckIds);
+            const deckIds = requestingUser.collection
+            .filter((colCard) => colCard.inDeck)
+            .map((colCard) => colCard.cardId);
+            const cards = await ds.getCardsByIds(deckIds);
             const playerOneCards = cards.map((card) => ({
                 id: new ObjectId(),
                 cardId: card.id,
@@ -176,8 +178,10 @@ const resolvers = {
             }
 
             // Initialize accepting player's cards (player two)
-            // Assuming playerTwo's deck is set and available
-            const cards = await ds.getCardsByIds(acceptingUser.deckIds);
+            const deckIds = acceptingUser.collection
+                .filter((colCard) => colCard.inDeck)
+                .map((colCard) => colCard.cardId);
+            const cards = await ds.getCardsByIds(deckIds);
             const playerTwoCards = cards.map((card) => ({
                 id: new ObjectId(),
                 cardId: card.id,
@@ -236,19 +240,26 @@ const resolvers = {
     },
     User: {
         collection: async (user, _, { ds }) => {
-            if (!user.collectionIds || user.collectionIds.length === 0) {
+            if (!user.collection || user.collection.length === 0) {
                 return [];
             }
-            return await ds.getCardsByIds(user.collectionIds);
+
+            // Get array of cards
+            const cards = await ds.getCardsByIds(user.collection.map((colCard) => colCard.cardId));
+
+            // Transform the cards into CollectionCard objects
+            return cards.map((card) => {
+                // Find the matching collection item to get the inDeck status
+                const collectionCard = user.collection.find((colCard) => colCard.cardId === card.id);
+                return {
+                    card: card,
+                    inDeck: collectionCard ? collectionCard.inDeck : false,
+                };
+            });
         },
-        deck: async (user, _, { ds }) => {
-            if (!user.deckIds || user.deckIds.length === 0) {
-                return [];
-            }
-            return await ds.getCardsByIds(user.deckIds);
-        },
-        battles: (user) => {
-            return [];
+        battles: async (user, _, { ds }) => {
+            const userBattles = await ds.getUserBattles(user.id);
+            return userBattles;
         },
         currentPokeAlert: (user) => user.currentPokeAlert,
     },
@@ -276,13 +287,77 @@ const resolvers = {
         expiresAt: (pokeAlert) => pokeAlert.expiresAt,
         claimed: (pokeAlert) => pokeAlert.claimed,
     },
+    CollectionCard: {
+        card: (collectionCard) => collectionCard.card,
+        inDeck: (collectionCard) => collectionCard.inDeck,
+    },
     Battle: {
-        playerOne: (battle) => battle.playerOne,
-        playerTwo: (battle) => battle.playerTwo,
-        playerOneCards: (battle) => battle.playerOneCards,
-        playerTwoCards: (battle) => battle.playerTwoCards,
-        rounds: (battle) => battle.rounds,
-        winner: (battle) => battle.winner,
+        playerOne: async (battle, _, { ds }) => {
+            if (!battle.playerOneId) {
+                throw new Error("Player One ID is missing in the battle");
+            }
+
+            const playerOne = await ds.getUser(battle.playerOneId);
+            if (!playerOne) {
+                throw new Error("Player One not found");
+            }
+
+            return playerOne;
+        },
+        playerTwo: async (battle, _, { ds }) => {
+            if (!battle.playerTwoId) {
+                throw new Error("Player Two ID is missing in the battle");
+            }
+    
+            const playerTwo = await ds.getUser(battle.playerTwoId);
+            if (!playerTwo) {
+                throw new Error("Player Two not found");
+            }
+    
+            return playerTwo;
+        },
+        playerOneCards: async (battle, _, { ds }) => {
+            // Check if playerOneCards are present
+            if (!battle.playerOneCards || battle.playerOneCards.length === 0) {
+                return [];
+            }
+    
+            // Map through playerOneCards array
+            const battleCards = await Promise.all(battle.playerOneCards.map(async (battleCard) => {
+                // Fetch the card details for each cardId
+                const card = await ds.getCard(battleCard.cardId);
+                return {
+                    id: battleCard.id,
+                    card: card,
+                    currentHp: battleCard.currentHp,
+                    isDead: battleCard.isDead
+                };
+            }));
+    
+            return battleCards;
+        },
+        playerTwoCards: async (battle, _, { ds }) => {
+            // Check if playerTwoCards are present
+            if (!battle.playerTwoCards || battle.playerTwoCards.length === 0) {
+                return [];
+            }
+    
+            // Map through playerTwoCards array
+            const battleCards = await Promise.all(battle.playerTwoCards.map(async (battleCard) => {
+                // Fetch the card details for each cardId
+                const card = await ds.getCard(battleCard.cardId);
+                return {
+                    id: battleCard.id,
+                    card: card,
+                    currentHp: battleCard.currentHp,
+                    isDead: battleCard.isDead
+                };
+            }));
+    
+            return battleCards;
+        },
+        rounds: (battle) => [],
+        winner: (battle) => null,
     },
     Round: {
         playerOneCard: (round) => round.playerOneCard,
