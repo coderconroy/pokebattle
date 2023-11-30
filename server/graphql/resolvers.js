@@ -235,7 +235,42 @@ const resolvers = {
 
             return updatedBattle;
         },
-        viewBattle: (_, { battleId }) => {},
+        viewBattle: async (_, { battleId }, { ds, currentUser }) => {
+            // Verify current user
+            const viewingUser = await verifyCurrentUser(ds, currentUser);
+
+            // Fetch the battle from the data source
+            const battle = await ds.getBattle(battleId);
+
+            if (!battle) {
+                throw new Error("Battle not found.");
+            }
+
+            // Check if the current user is playerOne or playerTwo in the battle
+            const isPlayerOne = battle.playerOneId === viewingUser.id;
+            const isPlayerTwo = battle.playerTwoId === viewingUser.id;
+
+            // Iterate over rounds to update view status
+            // The viewed flag only needs to be updated in the second to last round but all rounds are iterated over for robustness
+            for (let i = 0; i < battle.rounds.length; i++) {
+                // Check if round is complete
+                const round = battle.rounds[i];
+                if (!round.playerOneCard || !round.playerTwoCard) continue;
+
+                if (isPlayerOne && !round.playerOneViewed) {
+                    round.playerOneViewed = true;
+                } else if (isPlayerTwo && !round.playerTwoViewed) {
+                    round.playerTwoViewed = true;
+                }
+            }
+
+            // Save the updated battle back to the database
+            await ds.updateBattle(battleId, {
+                rounds: battle.rounds,
+            });
+
+            return battle;
+        },
         playCardInBattle: async (_, { battleId, battleCardId }, { ds, currentUser }) => {
             // Verify current user
             const user = await verifyCurrentUser(ds, currentUser);
@@ -510,10 +545,10 @@ const resolvers = {
         },
     },
     Round: {
-        playerOneCard: (round) => round.playerOneCard,
-        playerTwoCard: (round) => round.playerTwoCard,
-        playerOneViewed: (round) => round.playerOneViewed,
-        playerTwoViewed: (round) => round.playerTwoViewed,
+        playerOneCard: (round) => round.playerOneCard, // Complete
+        playerTwoCard: (round) => round.playerTwoCard, // Complete
+        playerOneViewed: (round) => round.playerOneViewed, // Complete
+        playerTwoViewed: (round) => round.playerTwoViewed, // Complete
     },
     BattleCard: {
         id: (battleCard) => battleCard.id,
@@ -522,8 +557,8 @@ const resolvers = {
             if (battleCard.cardId) return await ds.getCard(battleCard.cardId);
             else return battleCard.card;
         },
-        currentHp: (battleCard) => battleCard.currentHp,
-        isDead: (battleCard) => battleCard.isDead,
+        currentHp: (battleCard) => battleCard.currentHp, // Complete
+        isDead: (battleCard) => battleCard.isDead, // Complete
     },
     PlayedCard: {
         battleCard: async (playedCard, _, { ds }) => {
