@@ -6,16 +6,25 @@
                 <!-- <h2>Welcome</h2> -->
             </div>
             <form class="login-form" @submit.prevent="onSubmit">
+                <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
                 <div class="form-group">
-                    <input type="text" placeholder="Enter your name" class="form-control" />
+                    <input type="text" placeholder="Enter your first name" class="form-control" v-model="userData.firstName" />
                 </div>
 
                 <div class="form-group">
-                    <input type="text" placeholder="Enter your email" class="form-control" />
+                    <input type="text" placeholder="Enter your last name" class="form-control" v-model="userData.lastName" />
                 </div>
 
                 <div class="form-group">
-                    <input type="password" placeholder="Enter your password" class="form-control" />
+                    <input type="text" placeholder="Enter your username" class="form-control" v-model="userData.username" />
+                </div>
+
+                <div class="form-group">
+                    <input type="text" placeholder="Enter your email" class="form-control" v-model="userData.email" />
+                </div>
+
+                <div class="form-group">
+                    <input type="password" placeholder="Enter your password" class="form-control" v-model="userData.password" />
                 </div>
 
                 <button type="submit" class="signup-button">Sign-up</button>
@@ -28,10 +37,12 @@
     </div>
 </template>
 
+
 <script>
 import gql from "graphql-tag";
 import { ref } from "vue";
 import { useMutation } from "@vue/apollo-composable";
+import { useRouter } from 'vue-router';
 
 const SIGNUP_MUTATION = gql`
     mutation ($firstName: String!, $lastName: String!, $username: String!, $email: String!, $password: String!) {
@@ -50,31 +61,37 @@ const SIGNUP_MUTATION = gql`
 export default {
     name: "PokemonSignup",
     setup() {
-        // Dummy data for mutation variables
-        const variables = ref({
-            firstName: "Ash",
-            lastName: "Ketchum",
-            username: "pokeMaster",
-            email: "ash@example.com",
-            password: "pikachu",
+        const userData = ref({
+            firstName: '',
+            lastName: '',
+            username: '',
+            email: '',
+            password: '',
         });
+        let token = ref("");
+        const errorMessage = ref(null);
+        const router = useRouter(); // Get the router instance
 
-        const { mutate, onDone } = useMutation(SIGNUP_MUTATION, {
-            variables: variables.value,
-        });
+        const { mutate, onDone, onError } = useMutation(SIGNUP_MUTATION);
 
         // Handling the response
-        let token = ref("");
         onDone(({ data }) => {
             token.value = data.signup.token;
+            // Handle post-signup logic (e.g., redirecting the user)
+            router.push({ name: '/home' });
+        });
+
+        onError((error) => {
+            // Extract and set the error message
+            errorMessage.value = error.message || 'An error occurred during signup.';
         });
 
         // Submit handler
         const onSubmit = () => {
-            mutate();
+            mutate({ variables: userData.value });
         };
 
-        return { onSubmit, token };
+        return { onSubmit, token, userData, errorMessage };
     },
 };
 </script>
