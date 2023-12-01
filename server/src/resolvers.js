@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { ObjectId } = require("mongodb");
-const BattleState = require("../enums/BattleState");
+const BattleState = require("./enums/BattleState");
 
 const { SECRET_KEY } = require("../config/config");
 
