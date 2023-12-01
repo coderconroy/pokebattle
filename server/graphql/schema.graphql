@@ -5,11 +5,11 @@ type Query {
     # Implemented
     currentUser: User # Returns user currently logged in, else null
     users: [User!]! # Retrieves a list of all users
+    user(id: ID!): User # Retrieves a specific user by ID
+    card(id: ID!): Card # Retrieves detailed information about a specific card
     battle(id: ID!): Battle # Fetches detailed information about a particular battle
 
     # Not implemented
-    user(id: ID!): User # Retrieves a specific user by ID
-    card(id: ID!): Card # Retrieves detailed information about a specific card
     pokeAlert: PokeAlert # Retrieves a specific PokeAlert by user ID
     userBattles: [Battle!]! # Queries for battles involving a specific user
     userCollection: [Card!]! # Provides a list of all cards in a user's collection
@@ -23,14 +23,13 @@ type Mutation {
     signup(firstName: String!, lastName: String!, username: String!, email: String!, password: String!): AuthPayload! # Registers a new user with the provided details
     login(username: String!, password: String!): AuthPayload! # Authenticates a user and returns an authentication payload
     updateUserDeck(cardIds: [ID!]!): User! # Updates the user's deck (use CardCollection.card.id)
+    updateUserDetails(firstName: String!, lastName: String!, username: String!, email: String!, password: String): User # Updates the details of a user
     requestBattle(userId: ID!): Battle! # Initiates a battle request with another user
     acceptBattle(battleId: ID!): Battle! # Accepts a battle request
     rejectBattle(battleId: ID!): Battle! # Rejects a battle request
     playCardInBattle(battleId: ID!, battleCardId: ID!): Battle! # Plays a card in an ongoing battle
     viewBattle(battleId: ID!): Battle! # Views the details of a specific battle
     forfeitBattle(battleId: ID!): Battle! # Forfeits an ongoing battle
-
-    updateUserDetails(firstName: String!, lastName: String!, username: String!, email: String!, password: String): User # Updates the details of a user
 
     # Not implemented
     claimPokeAlert(pokeAlertId: ID!): PokeAlert # Claims a PokeAlert

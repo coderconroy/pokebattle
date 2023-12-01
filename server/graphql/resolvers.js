@@ -39,8 +39,12 @@ const resolvers = {
         users: async (_, __, { ds }) => {
             return await ds.getUsers();
         },
-        user: (_, { id }) => {},
-        card: (_, { id }) => {},
+        user: async (_, { id }, { ds }) => {
+            return await ds.getUser(id);
+        },
+        card: async (_, { id }, { ds }) => {
+            return await ds.getCard(id);
+        },
         battle: async (_, { id }, { ds }) => {
             const battle = await ds.getBattle(id);
 
