@@ -406,7 +406,47 @@ const resolvers = {
             // Return the updated battle
             return await ds.getBattle(battleId);
         },
-        forfeitBattle: (_, { battleId }) => {},
+        forfeitBattle: async (_, { battleId }, { ds, currentUser }) => {
+            // Verify current user
+            const forfeitingUser = await verifyCurrentUser(ds, currentUser);
+
+            // Fetch the battle from the data source
+            const battle = await ds.getBattle(battleId);
+
+            // Check if the battle exists
+            if (!battle) {
+                throw new Error("Battle not found.");
+            }
+
+            // Check battle is active
+            if (battle.state !== BattleState.ACTIVE) {
+                throw new Error("Battle is not currently active");
+            }
+
+            // Determine if the current user is playerOne or playerTwo
+            const isPlayerOne = battle.playerOneId === forfeitingUser.id;
+            const isPlayerTwo = battle.playerTwoId === forfeitingUser.id;
+
+            if (!isPlayerOne && !isPlayerTwo) {
+                throw new Error("User is not a participant in this battle");
+            }
+
+            // Update the battle state and winner
+            battle.state = BattleState.FORFEITED;
+            if (isPlayerOne) {
+                battle.winnerId = battle.playerTwoId;
+            } else {
+                battle.winnerId = battle.playerOneId;
+            }
+
+            // Update the battle in the database
+            await ds.updateBattle(battleId, {
+                state: battle.state,
+                winnerId: battle.winnerId,
+            });
+
+            return battle;
+        },
         claimPokeAlert: (_, { pokeAlertId }) => {},
         deletePokeAlert: (_, { pokeAlertId }) => true,
         updateUser: (_, { id, firstName, lastName, username, email }) => {},

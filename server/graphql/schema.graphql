@@ -27,9 +27,9 @@ type Mutation {
     rejectBattle(battleId: ID!): Battle! # Rejects a battle request
     playCardInBattle(battleId: ID!, battleCardId: ID!): Battle! # Plays a card in an ongoing battle
     viewBattle(battleId: ID!): Battle! # Views the details of a specific battle
+    forfeitBattle(battleId: ID!): Battle! # Forfeits an ongoing battle
 
     # Not implemented
-    forfeitBattle(battleId: ID!): Battle! # Forfeits an ongoing battle
     claimPokeAlert(pokeAlertId: ID!): PokeAlert # Claims a PokeAlert
     deletePokeAlert(pokeAlertId: ID!): Boolean # Deletes a PokeAlert
     updateUserDeck(cardIds: [ID!]!): User! # Updates the user's deck
