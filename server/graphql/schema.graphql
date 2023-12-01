@@ -22,6 +22,7 @@ type Mutation {
     # Implemented
     signup(firstName: String!, lastName: String!, username: String!, email: String!, password: String!): AuthPayload! # Registers a new user with the provided details
     login(username: String!, password: String!): AuthPayload! # Authenticates a user and returns an authentication payload
+    updateUserDeck(cardIds: [ID!]!): User! # Updates the user's deck (use CardCollection.card.id)
     requestBattle(userId: ID!): Battle! # Initiates a battle request with another user
     acceptBattle(battleId: ID!): Battle! # Accepts a battle request
     rejectBattle(battleId: ID!): Battle! # Rejects a battle request
@@ -29,11 +30,11 @@ type Mutation {
     viewBattle(battleId: ID!): Battle! # Views the details of a specific battle
     forfeitBattle(battleId: ID!): Battle! # Forfeits an ongoing battle
 
+    updateUserDetails(firstName: String!, lastName: String!, username: String!, email: String!, password: String): User # Updates the details of a user
+
     # Not implemented
     claimPokeAlert(pokeAlertId: ID!): PokeAlert # Claims a PokeAlert
     deletePokeAlert(pokeAlertId: ID!): Boolean # Deletes a PokeAlert
-    updateUserDeck(cardIds: [ID!]!): User! # Updates the user's deck
-    updateUser(id: ID!, firstName: String, lastName: String, username: String, email: String): User # Updates the details of a user
 }
 
 """

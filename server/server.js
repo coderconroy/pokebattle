@@ -192,6 +192,36 @@ class DataSourceJson {
         return battles.map((battle) => DataSourceJson._decorateBattle(battle));
     }
 
+    async updateUser(userId, {firstName, lastName, username, email, password, collection }) {
+        // Only include defined fields in update data
+        const user = {
+            ...(firstName && { firstName: firstName }),
+            ...(lastName && { lastName: lastName }),
+            ...(username && { username: username }),
+            ...(email && { email: email }),
+            ...(collection && { collection: collection }),
+        };
+
+        // Hash password
+        if (password) {
+            user.passwordHash = await bcrypt.hash(password, 10);
+        }
+
+        // Perform the update in the database
+        const updatedUser = await this._db.collection("user").findOneAndUpdate(
+            { _id: new ObjectId(userId) },
+            { $set: user },
+            { returnDocument: "after" }
+        );
+
+        if (!updatedUser) {
+            throw new Error("Failed to update user or user not found");
+        }
+
+        // Return the updated user
+        return DataSourceJson._decorateUser(updatedUser);
+    }
+
     // TODO: Continue here with no battle being found even though passed battle id is correct
     async updateBattle(battleId, { state, playerOneCards, playerTwoCards, rounds, winnerId }) {
         // Only include defined fields in update data

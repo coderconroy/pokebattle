@@ -119,6 +119,46 @@ const resolvers = {
                 throw new Error("Invalid credentials");
             }
         },
+        updateUserDeck: async (_, { cardIds }, { ds, currentUser }) => {
+            // Verify current user
+            const user = await verifyCurrentUser(ds, currentUser);
+
+            // Validate input length
+            if (cardIds.length !== 6) {
+                throw new Error("Input array of deck card IDs should be of length 6");
+            }
+
+            // Verify all cards are distinct
+            const cardIdSet = new Set(cardIds);
+            if (cardIdSet.size !== cardIds.length) {
+                throw new Error("All card IDs need to be distinct");
+            }
+
+            // Update the 'inDeck' status of each card in the user's collection
+            let deckSize = 0;
+            const updatedCollection = user.collection.map((collectionCard) => {
+                const inDeck = cardIds.includes(collectionCard.cardId);
+                if (inDeck) {
+                    deckSize++;
+                }
+                return {
+                    ...collectionCard,
+                    inDeck: inDeck,
+                };
+            });
+            
+            // Check all deck cards are also part of the collection
+            if (deckSize !== 6) {
+                throw new Error("All card IDs must be in the user collection");
+            }
+
+            // Update the user's collection in the database
+            const updatedUser = await ds.updateUser(user.id, {
+                collection: updatedCollection
+            });
+
+            return updatedUser;
+        },
         requestBattle: async (_, { userId }, { ds, currentUser }) => {
             // Verify current user and get both user details
             const requestingUser = await verifyCurrentUser(ds, currentUser);
@@ -449,7 +489,7 @@ const resolvers = {
         },
         claimPokeAlert: (_, { pokeAlertId }) => {},
         deletePokeAlert: (_, { pokeAlertId }) => true,
-        updateUser: (_, { id, firstName, lastName, username, email }) => {},
+        updateUserDetails: (_, { id, firstName, lastName, username, email, password }) => {},
     },
     AuthPayload: {
         // Assuming AuthPayload contains token and user
