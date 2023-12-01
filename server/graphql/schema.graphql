@@ -8,11 +8,10 @@ type Query {
     user(id: ID!): User # Retrieves a specific user by ID
     card(id: ID!): Card # Retrieves detailed information about a specific card
     battle(id: ID!): Battle # Fetches detailed information about a particular battle
+    userBattles: [Battle!]! # Queries for battles of all states the current user is involved in
 
     # Not implemented
-    pokeAlert: PokeAlert # Retrieves a specific PokeAlert by user ID
-    userBattles: [Battle!]! # Queries for battles involving a specific user
-    userCollection: [Card!]! # Provides a list of all cards in a user's collection
+    pokeAlert: PokeAlert # Retrieves a PokeAlert for the current user
 }
 
 """

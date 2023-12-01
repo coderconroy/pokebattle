@@ -54,10 +54,12 @@ const resolvers = {
 
             return battle;
         },
-        // Stubs
+        userBattles: async (_, __, { ds, currentUser }) => {
+            // Verify current user
+            const user = await verifyCurrentUser(ds, currentUser);
+            return await ds.getUserBattles(user.id);
+        },
         pokeAlert: (_, __, { ds, currentUser }) => null,
-        userBattles: (_, __, { ds, currentUser }) => [],
-        userCollection: (_, __, { ds, currentUser }) => [],
     },
     Mutation: {
         // Stubs
@@ -637,7 +639,9 @@ const resolvers = {
 
             return battleCards;
         },
-        rounds: async (battle) => battle.rounds, // Complete
+        rounds: async (battle) => {
+            return battle.rounds ? battle.rounds : [];
+        },
         winner: async (battle, _, { ds }) => {
             if (!battle.winnerId) return null;
             return await ds.getUser(battle.winnerId);
@@ -652,7 +656,6 @@ const resolvers = {
     BattleCard: {
         id: (battleCard) => battleCard.id,
         card: async (battleCard, _, { ds }) => {
-            // TODO: Identify why two battleCard versions arrive here
             if (battleCard.cardId) return await ds.getCard(battleCard.cardId);
             else return battleCard.card;
         },
