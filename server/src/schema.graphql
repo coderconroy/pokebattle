@@ -9,8 +9,6 @@ type Query {
     card(id: ID!): Card # Retrieves detailed information about a specific card
     battle(id: ID!): Battle # Fetches detailed information about a particular battle
     userBattles: [Battle!]! # Queries for battles of all states the current user is involved in
-
-    # Not implemented
     pokeAlert: PokeAlert # Retrieves a PokeAlert for the current user
 }
 
@@ -31,8 +29,8 @@ type Mutation {
     forfeitBattle(battleId: ID!): Battle! # Forfeits an ongoing battle
 
     # Not implemented
-    claimPokeAlert(pokeAlertId: ID!): PokeAlert # Claims a PokeAlert
-    deletePokeAlert(pokeAlertId: ID!): Boolean # Deletes a PokeAlert
+    claimPokeAlert: Boolean! # Claims a PokeAlert for the current user
+    deletePokeAlert: Boolean! # Deletes a PokeAlert for the current user
 }
 
 """
@@ -95,11 +93,9 @@ PokeAlert represents a notification about the discovery of a new Pokemon card.
 Each alert is time-sensitive and provides an opportunity for the user to claim the card.
 """
 type PokeAlert {
-    id: ID!
     card: Card! # The Pokemon card discovered
     discoveredAt: String! # Time when the card was discovered
     expiresAt: String! # Time when the opportunity to claim the card expires
-    claimed: Boolean! # Whether the user has claimed the card
 }
 
 """

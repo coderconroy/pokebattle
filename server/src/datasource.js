@@ -260,11 +260,9 @@ class DataSourceJson {
         const expiresAt = new Date(currentTime.getTime() + lifetime);
 
         const pokeAlert = {
-            id: new ObjectId(),
             cardId: cardId,
             discoveredAt: currentTime.toISOString(),
             expiresAt: expiresAt.toISOString(),
-            claimed: false
         };
 
         const user = await this._db.collection('user').findOneAndUpdate(
@@ -336,8 +334,6 @@ class DataSourceJson {
     }
 
     static _decoratePokeAlert(pokeAlert) {
-        // Convert ObjectId to string for battle card ID
-        pokeAlert.id = pokeAlert.id.toString();
         return pokeAlert;
     }
 

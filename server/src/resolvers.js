@@ -59,7 +59,23 @@ const resolvers = {
             const user = await verifyCurrentUser(ds, currentUser);
             return await ds.getUserBattles(user.id);
         },
-        pokeAlert: (_, __, { ds, currentUser }) => null,
+        pokeAlert: async (_, __, { ds, currentUser }) => {
+            // Verify current user
+            const user = await verifyCurrentUser(ds, currentUser);
+
+            // Check if the user has a PokeAlert
+            if (!user.currentPokeAlert) {
+                return null;
+            }
+
+            // Check if the PokeAlert has expired
+            const currentTime = new Date();
+            if (currentTime.toISOString() > user.currentPokeAlert.expiresAt) {
+                return null; // PokeAlert has expired
+            }
+
+            return user.currentPokeAlert;
+        },
     },
     Mutation: {
         // Stubs
@@ -509,8 +525,8 @@ const resolvers = {
 
             return battle;
         },
-        claimPokeAlert: (_, { pokeAlertId }) => {},
-        deletePokeAlert: (_, { pokeAlertId }) => true,
+        claimPokeAlert: (_, __, { ds, currentUser }) => {},
+        deletePokeAlert: (_, { ds, currentUser }) => true,
     },
     AuthPayload: {
         // Assuming AuthPayload contains token and user
@@ -560,11 +576,12 @@ const resolvers = {
         large: (images) => images.large,
     },
     PokeAlert: {
-        id: (pokeAlert) => pokeAlert.id,
-        card: (pokeAlert) => pokeAlert.card,
+        card: async (pokeAlert, _, { ds }) => {
+            if (pokeAlert.cardId) return await ds.getCard(pokeAlert.cardId);
+            else return pokeAlert.card;
+        },
         discoveredAt: (pokeAlert) => pokeAlert.discoveredAt,
         expiresAt: (pokeAlert) => pokeAlert.expiresAt,
-        claimed: (pokeAlert) => pokeAlert.claimed,
     },
     CollectionCard: {
         card: (collectionCard) => collectionCard.card,
