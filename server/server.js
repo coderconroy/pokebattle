@@ -14,7 +14,8 @@ const jwt = require("jsonwebtoken");
 
 // Import local modules
 const { SECRET_KEY } = require("./config/config");
-const { DataSourceJson } = require('./src/datasource');
+const { DataSourceJson } = require("./src/datasource");
+const { PokeAlertJob } = require("./src/pokeAlertJob");
 const { resolvers } = require("./src/resolvers");
 
 // Read GraphQL schema
@@ -83,6 +84,10 @@ async function startServer() {
 
     // Start the HTTP server
     httpServer.listen(port, () => console.log(`Server started on http://localhost:${port}${graphqlPath}`));
+
+    // Start PokeAlert generation job
+    const pokeAlertJob = new PokeAlertJob(datasource);
+    pokeAlertJob.start();
 }
 
 // Execute the startServer function

@@ -254,6 +254,33 @@ class DataSourceJson {
         return battleCard ? DataSourceJson._decorateBattleCard(battleCard) : null;
     }
 
+    // PokeAlert-related methods
+    async createPokeAlert(userId, { cardId }, lifetime) {
+        const currentTime = new Date();
+        const expiresAt = new Date(currentTime.getTime() + lifetime);
+
+        const pokeAlert = {
+            id: new ObjectId(),
+            cardId: cardId,
+            discoveredAt: currentTime.toISOString(),
+            expiresAt: expiresAt.toISOString(),
+            claimed: false
+        };
+
+        const user = await this._db.collection('user').findOneAndUpdate(
+            { _id: new ObjectId(userId) },
+            { $set: { currentPokeAlert: pokeAlert } },
+            { returnDocument: 'after' }
+        );
+
+        if (!user) {
+            throw new Error('User not found or PokeAlert creation failed');
+        }
+
+        // Decorate the PokeAlert object before returning
+        return DataSourceJson._decoratePokeAlert(user.currentPokeAlert);
+    }
+
     // Static helper methods
     static _decorateUser(user) {
         // Convert ObjectId to string for user ID
@@ -306,6 +333,12 @@ class DataSourceJson {
         // Convert ObjectId to string for battle card ID
         battleCard.id = battleCard.id.toString();
         return battleCard;
+    }
+
+    static _decoratePokeAlert(pokeAlert) {
+        // Convert ObjectId to string for battle card ID
+        pokeAlert.id = pokeAlert.id.toString();
+        return pokeAlert;
     }
 
     static _loadConfig(configFile) {
