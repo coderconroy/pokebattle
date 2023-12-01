@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { ObjectId } = require("mongodb");
-const BattleState = require("../enums/BattleState");
+const BattleState = require("./enums/BattleState");
 
 const { SECRET_KEY } = require("../config/config");
 
@@ -39,8 +39,12 @@ const resolvers = {
         users: async (_, __, { ds }) => {
             return await ds.getUsers();
         },
-        user: (_, { id }) => {},
-        card: (_, { id }) => {},
+        user: async (_, { id }, { ds }) => {
+            return await ds.getUser(id);
+        },
+        card: async (_, { id }, { ds }) => {
+            return await ds.getCard(id);
+        },
         battle: async (_, { id }, { ds }) => {
             const battle = await ds.getBattle(id);
 
@@ -50,10 +54,12 @@ const resolvers = {
 
             return battle;
         },
-        // Stubs
+        userBattles: async (_, __, { ds, currentUser }) => {
+            // Verify current user
+            const user = await verifyCurrentUser(ds, currentUser);
+            return await ds.getUserBattles(user.id);
+        },
         pokeAlert: (_, __, { ds, currentUser }) => null,
-        userBattles: (_, __, { ds, currentUser }) => [],
-        userCollection: (_, __, { ds, currentUser }) => [],
     },
     Mutation: {
         // Stubs
@@ -118,6 +124,62 @@ const resolvers = {
             } else {
                 throw new Error("Invalid credentials");
             }
+        },
+        updateUserDeck: async (_, { cardIds }, { ds, currentUser }) => {
+            // Verify current user
+            const user = await verifyCurrentUser(ds, currentUser);
+
+            // Validate input length
+            if (cardIds.length !== 6) {
+                throw new Error("Input array of deck card IDs should be of length 6");
+            }
+
+            // Verify all cards are distinct
+            const cardIdSet = new Set(cardIds);
+            if (cardIdSet.size !== cardIds.length) {
+                throw new Error("All card IDs need to be distinct");
+            }
+
+            // Update the 'inDeck' status of each card in the user's collection
+            let deckSize = 0;
+            const updatedCollection = user.collection.map((collectionCard) => {
+                const inDeck = cardIds.includes(collectionCard.cardId);
+                if (inDeck) {
+                    deckSize++;
+                }
+                return {
+                    ...collectionCard,
+                    inDeck: inDeck,
+                };
+            });
+
+            // Check all deck cards are also part of the collection
+            if (deckSize !== 6) {
+                throw new Error("All card IDs must be in the user collection");
+            }
+
+            // Update the user's collection in the database
+            const updatedUser = await ds.updateUser(user.id, {
+                collection: updatedCollection,
+            });
+
+            return updatedUser;
+        },
+        updateUserDetails: async (_, { firstName, lastName, username, email, password }, { ds, currentUser }) => {
+            // Verify current userr
+            const user = await verifyCurrentUser(ds, currentUser);
+
+            // Call the updateUser function from the data source
+            const updatedUser = await ds.updateUser(user.id, {
+                firstName: firstName,
+                lastName: lastName,
+                username: username,
+                email: email,
+                password: password,
+            });
+
+            // Return the updated user details
+            return updatedUser;
         },
         requestBattle: async (_, { userId }, { ds, currentUser }) => {
             // Verify current user and get both user details
@@ -235,7 +297,42 @@ const resolvers = {
 
             return updatedBattle;
         },
-        viewBattle: (_, { battleId }) => {},
+        viewBattle: async (_, { battleId }, { ds, currentUser }) => {
+            // Verify current user
+            const viewingUser = await verifyCurrentUser(ds, currentUser);
+
+            // Fetch the battle from the data source
+            const battle = await ds.getBattle(battleId);
+
+            if (!battle) {
+                throw new Error("Battle not found.");
+            }
+
+            // Check if the current user is playerOne or playerTwo in the battle
+            const isPlayerOne = battle.playerOneId === viewingUser.id;
+            const isPlayerTwo = battle.playerTwoId === viewingUser.id;
+
+            // Iterate over rounds to update view status
+            // The viewed flag only needs to be updated in the second to last round but all rounds are iterated over for robustness
+            for (let i = 0; i < battle.rounds.length; i++) {
+                // Check if round is complete
+                const round = battle.rounds[i];
+                if (!round.playerOneCard || !round.playerTwoCard) continue;
+
+                if (isPlayerOne && !round.playerOneViewed) {
+                    round.playerOneViewed = true;
+                } else if (isPlayerTwo && !round.playerTwoViewed) {
+                    round.playerTwoViewed = true;
+                }
+            }
+
+            // Save the updated battle back to the database
+            await ds.updateBattle(battleId, {
+                rounds: battle.rounds,
+            });
+
+            return battle;
+        },
         playCardInBattle: async (_, { battleId, battleCardId }, { ds, currentUser }) => {
             // Verify current user
             const user = await verifyCurrentUser(ds, currentUser);
@@ -371,10 +468,49 @@ const resolvers = {
             // Return the updated battle
             return await ds.getBattle(battleId);
         },
-        forfeitBattle: (_, { battleId }) => {},
+        forfeitBattle: async (_, { battleId }, { ds, currentUser }) => {
+            // Verify current user
+            const forfeitingUser = await verifyCurrentUser(ds, currentUser);
+
+            // Fetch the battle from the data source
+            const battle = await ds.getBattle(battleId);
+
+            // Check if the battle exists
+            if (!battle) {
+                throw new Error("Battle not found.");
+            }
+
+            // Check battle is active
+            if (battle.state !== BattleState.ACTIVE) {
+                throw new Error("Battle is not currently active");
+            }
+
+            // Determine if the current user is playerOne or playerTwo
+            const isPlayerOne = battle.playerOneId === forfeitingUser.id;
+            const isPlayerTwo = battle.playerTwoId === forfeitingUser.id;
+
+            if (!isPlayerOne && !isPlayerTwo) {
+                throw new Error("User is not a participant in this battle");
+            }
+
+            // Update the battle state and winner
+            battle.state = BattleState.FORFEITED;
+            if (isPlayerOne) {
+                battle.winnerId = battle.playerTwoId;
+            } else {
+                battle.winnerId = battle.playerOneId;
+            }
+
+            // Update the battle in the database
+            await ds.updateBattle(battleId, {
+                state: battle.state,
+                winnerId: battle.winnerId,
+            });
+
+            return battle;
+        },
         claimPokeAlert: (_, { pokeAlertId }) => {},
         deletePokeAlert: (_, { pokeAlertId }) => true,
-        updateUser: (_, { id, firstName, lastName, username, email }) => {},
     },
     AuthPayload: {
         // Assuming AuthPayload contains token and user
@@ -503,27 +639,28 @@ const resolvers = {
 
             return battleCards;
         },
-        rounds: async (battle) => battle.rounds, // Complete
+        rounds: async (battle) => {
+            return battle.rounds ? battle.rounds : [];
+        },
         winner: async (battle, _, { ds }) => {
             if (!battle.winnerId) return null;
             return await ds.getUser(battle.winnerId);
         },
     },
     Round: {
-        playerOneCard: (round) => round.playerOneCard,
-        playerTwoCard: (round) => round.playerTwoCard,
-        playerOneViewed: (round) => round.playerOneViewed,
-        playerTwoViewed: (round) => round.playerTwoViewed,
+        playerOneCard: (round) => round.playerOneCard, // Complete
+        playerTwoCard: (round) => round.playerTwoCard, // Complete
+        playerOneViewed: (round) => round.playerOneViewed, // Complete
+        playerTwoViewed: (round) => round.playerTwoViewed, // Complete
     },
     BattleCard: {
         id: (battleCard) => battleCard.id,
         card: async (battleCard, _, { ds }) => {
-            // TODO: Identify why two battleCard versions arrive here
             if (battleCard.cardId) return await ds.getCard(battleCard.cardId);
             else return battleCard.card;
         },
-        currentHp: (battleCard) => battleCard.currentHp,
-        isDead: (battleCard) => battleCard.isDead,
+        currentHp: (battleCard) => battleCard.currentHp, // Complete
+        isDead: (battleCard) => battleCard.isDead, // Complete
     },
     PlayedCard: {
         battleCard: async (playedCard, _, { ds }) => {
