@@ -525,8 +525,65 @@ const resolvers = {
 
             return battle;
         },
-        claimPokeAlert: (_, __, { ds, currentUser }) => {},
-        deletePokeAlert: (_, { ds, currentUser }) => true,
+        claimPokeAlert: async (_, __, { ds, currentUser }) => {
+            // Verify current user
+            const user = await verifyCurrentUser(ds, currentUser);
+
+            // Check if the user has a PokeAlert
+            if (!user.currentPokeAlert) {
+                return false;
+            }
+
+            // Check if the PokeAlert has expired
+            const currentTime = new Date();
+            if (currentTime.toISOString() > user.currentPokeAlert.expiresAt) {
+                return false; // PokeAlert has expired
+            }
+
+            // Add PokeAlert card to user collection
+            user.collection.push({
+                cardId: user.currentPokeAlert.cardId,
+                inDeck: false,
+            })
+            const updateResult = await ds.updateUser(user.id, {collection: user.collection});
+
+            if (!updateResult) {
+                return false; // Failed to add card to collection
+            }
+
+            // Delete PokeAlert
+            const updatedUser = await ds.deletePokeAlert(user.id);
+
+            if (!updatedUser) {
+                return false; // Failed to delete PokeAlert
+            }
+
+            return true;
+        },
+        deletePokeAlert: async (_, __, { ds, currentUser }) => {
+            // Verify current user
+            const user = await verifyCurrentUser(ds, currentUser);
+
+            // Check if the user has a PokeAlert
+            if (!user.currentPokeAlert) {
+                return false;
+            }
+
+            // Check if the PokeAlert has expired
+            const currentTime = new Date();
+            if (currentTime.toISOString() > user.currentPokeAlert.expiresAt) {
+                return false; // PokeAlert has expired
+            }
+
+            // Delete PokeAlert
+            const updatedUser = await ds.deletePokeAlert(user.id);
+
+            if (!updatedUser) {
+                return false; // Failed to delete PokeAlert
+            }
+
+            return true;
+        },
     },
     AuthPayload: {
         // Assuming AuthPayload contains token and user

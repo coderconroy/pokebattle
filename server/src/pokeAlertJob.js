@@ -1,8 +1,8 @@
 const cron = require("node-cron");
 
 const PA_SELECT_USER_FRAC = 1; // Fraction of users without alerts to generate alerts for
-const PA_JOB_FREQ = "*/7 * * * * *"; // Frequency of execution of the poke alert job (10 seconds)
-const PA_LIFETIME = 13 * 1000; // Lifetime of poke alert before expiry (15 seconds)
+const PA_JOB_FREQ = "*/20 * * * * *"; // Frequency of execution of the poke alert job (10 seconds)
+const PA_LIFETIME = 10 * 1000; // Lifetime of poke alert before expiry (15 seconds)
 
 class PokeAlertJob {
     constructor(dataSource) {

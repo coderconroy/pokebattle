@@ -29,30 +29,31 @@ class DataSourceJson {
             console.error(`File not found: ${filePath}`);
             return;
         }
-    
+
         try {
             // Read and parse file content
             const fileContent = fs.readFileSync(filePath, "utf8");
             const allCards = JSON.parse(fileContent);
-    
+
             // Filter cards based on specific conditions:
             // 1. Pokemon supertype must be "Pokémon"
             // 2. Must have at least one attack with non-empty damage
-            const filteredCards = allCards.filter(card =>
-                card.supertype === "Pokémon" &&
-                card.attacks &&
-                card.attacks.some(attack => attack.damage && attack.damage.trim() !== "")
+            const filteredCards = allCards.filter(
+                (card) =>
+                    card.supertype === "Pokémon" &&
+                    card.attacks &&
+                    card.attacks.some((attack) => attack.damage && attack.damage.trim() !== "")
             );
-    
+
             // Prepare bulk operations for MongoDB
-            const bulkOps = filteredCards.map(card => ({
+            const bulkOps = filteredCards.map((card) => ({
                 updateOne: {
                     filter: { id: card.id },
                     update: { $set: card },
                     upsert: true,
                 },
             }));
-    
+
             // Execute bulk write to the database
             await this._db.collection("card").bulkWrite(bulkOps);
             console.log(`Processed ${filteredCards.length} Pokémon cards from ${filePath}`);
@@ -156,18 +157,18 @@ class DataSourceJson {
     async getCards() {
         // Fetch all cards
         let cards = await this._db.collection("card").find().toArray();
-        return cards.map(card => DataSourceJson._decorateCard(card)) || [];
+        return cards.map((card) => DataSourceJson._decorateCard(card)) || [];
     }
 
     async getCardsByIds(cardIds) {
         // Convert string IDs to ObjectId
-        const objectIds = cardIds.map(id => new ObjectId(id));
+        const objectIds = cardIds.map((id) => new ObjectId(id));
         let cards = await this._db
             .collection("card")
             .find({ _id: { $in: objectIds } })
             .toArray();
 
-        return cards.map(card => DataSourceJson._decorateCard(card)) || [];
+        return cards.map((card) => DataSourceJson._decorateCard(card)) || [];
     }
 
     // Battle-related methods
@@ -265,18 +266,36 @@ class DataSourceJson {
             expiresAt: expiresAt.toISOString(),
         };
 
-        const user = await this._db.collection('user').findOneAndUpdate(
-            { _id: new ObjectId(userId) },
-            { $set: { currentPokeAlert: pokeAlert } },
-            { returnDocument: 'after' }
-        );
+        const user = await this._db
+            .collection("user")
+            .findOneAndUpdate(
+                { _id: new ObjectId(userId) },
+                { $set: { currentPokeAlert: pokeAlert } },
+                { returnDocument: "after" }
+            );
 
         if (!user) {
-            throw new Error('User not found or PokeAlert creation failed');
+            throw new Error("User not found or PokeAlert creation failed");
         }
 
         // Decorate the PokeAlert object before returning
         return DataSourceJson._decoratePokeAlert(user.currentPokeAlert);
+    }
+
+    async deletePokeAlert(userId) {
+        // Convert userId from string to ObjectId
+        const objectId = new ObjectId(userId);
+
+        // Perform the update in the database
+        const updatedUser = await this._db
+            .collection("user")
+            .findOneAndUpdate({ _id: objectId }, { $unset: {currentPokeAlert: ""} }, { returnDocument: "after" });
+
+        if (!updatedUser) {
+            throw new Error("Failed to update user or user not found");
+        }
+
+        return DataSourceJson._decorateUser(updatedUser);
     }
 
     // Static helper methods
@@ -361,7 +380,6 @@ class DataSourceJson {
             };
         }
     }
-    
 }
 
 module.exports = { DataSourceJson };
