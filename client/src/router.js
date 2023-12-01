@@ -12,6 +12,18 @@ import Notifications from "@/pages/UserNotifications.vue";
 import PokeDiscovered from "@/pages/PokeDiscovered.vue";
 import UserHome from "@/pages/HomePage.vue";
 
+import { isAuthenticated } from '@/pages/UserLogin.vue';
+
+function requireAuth(to, from, next) {
+  console.log(`Authenticated (router): ${isAuthenticated.value}`);
+  if (isAuthenticated.value) {
+    // User is authenticated, allow access to the route
+    next();
+  } else {
+    // User is not authenticated, redirect to login
+    next({ name: 'login' });
+  }
+};
 
 const routes = [
   {
@@ -37,6 +49,7 @@ const routes = [
     path: '/dashboard',
     component: DashboardLayout,
     redirect: '/home',
+    beforeEnter: requireAuth, // Apply the navigation guard
     children: [
       {
         path: '/home',

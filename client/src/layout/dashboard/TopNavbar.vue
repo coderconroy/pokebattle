@@ -39,12 +39,18 @@
               <p>Settings</p>
             </a>
           </li>
+          <drop-down class="nav-item" title-classes="nav-link" icon="ti-user" @click="onLogoutClick">
+            <a class="dropdown-item" href="/login">Logout</a>
+          </drop-down>
         </ul>
       </div>
     </div>
   </nav>
 </template>
+
+
 <script>
+// import { isAuthenticated } from '@/pages/UserLogin.vue';
 export default {
   computed: {
     routeName() {
@@ -76,6 +82,12 @@ export default {
     hideSidebar() {
       this.$sidebar.displaySidebar(false);
     },
+    // onLogoutClick() {
+    //   // Your logout logic
+    //   isAuthenticated.value = false;
+    //   console.log(`Authenticated (Top): ${isAuthenticated.value}`);
+    //   // Add any additional logic for logout (e.g., redirecting to the login page)
+    // },
   },
 };
 </script>

@@ -53,6 +53,7 @@ const LOGIN_MUTATION = gql`
     }
 `;
 
+  export const isAuthenticated = ref(false);
   export default {
     name: 'PokemonLogin',
     setup() {
@@ -67,9 +68,21 @@ const LOGIN_MUTATION = gql`
 
         const { mutate, onDone, onError } = useMutation(LOGIN_MUTATION);
 
+        // Check if there's a stored token
+        const storedToken = localStorage.getItem('authToken');
+        if (storedToken) {
+            token.value = storedToken;
+            isAuthenticated.value = true;
+        }
+
         // Handling the response
         onDone(({ data }) => {
             token.value = data.login.token;
+            isAuthenticated.value = true;
+
+            // Store the token in localStorage
+            localStorage.setItem('authToken', data.login.token);
+
             // Handle post-login logic (e.g., redirecting the user)
             router.push({ name: 'home' });
         });

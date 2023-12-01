@@ -15,7 +15,8 @@
           title-classes="nav-link"
           icon="ti-game"
         >
-        <a class="dropdown-item" href="/battle-page">Active Battle Page</a>
+        <!-- <a class="dropdown-item" href="/battle-page">Active Battle Page</a> -->
+        <a class="dropdown-item" @click.prevent="redirectToBattlePage">Active Battle Page</a>
         </drop-down>
         <!-- <div class="dropdown">
           <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -55,6 +56,20 @@
             <p>Settings</p>
           </a>
         </li>
+        <!-- <drop-down class="nav-item" title-classes="nav-link" icon="ti-user">
+          <a ref="logoutLink" class="dropdown-item" href="/login">Logout</a>
+        </drop-down> -->
+        <drop-down class="nav-item" title-classes="nav-link" icon="ti-user" @click="onLogoutClick">
+          <a class="dropdown-item" href="/login">Logout</a>
+        </drop-down>
+        <!-- <div class="dropdown">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="ti-user"></i>
+          </button>
+          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <a class="dropdown-item" href="/login" v-on:click="onLogoutClick">Logout</a>
+          </div>
+        </div> -->
         <li class="divider"></li>
       </mobile-menu>
     </side-bar>
@@ -90,6 +105,9 @@
 import TopNavbar from "./TopNavbar.vue";
 import DashboardContent from "./UserContent.vue";
 import MobileMenu from "./MobileMenu";
+import { useRouter } from 'vue-router';
+
+import { isAuthenticated } from '@/pages/UserLogin.vue';
 
 export default {
   components: {
@@ -105,6 +123,18 @@ export default {
       } else {
         console.error("Sidebar component is not initialized.");
       }
+    },
+    redirectToBattlePage() {
+      // Handle the routing logic here
+      const router = useRouter();
+      this.$router.push('/battle-page'); // Replace 'battle-page' with your actual route name
+    },
+    onLogoutClick() {
+      // Clear the token from localStorage
+      localStorage.removeItem('authToken');
+      // Your logout logic
+      isAuthenticated.value = false;
+      // Add any additional logic for logout (e.g., redirecting to the login page)
     },
   },
 };
