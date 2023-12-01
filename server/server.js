@@ -11,6 +11,7 @@ const fs = require("fs");
 const { SECRET_KEY } = require("./config/config");
 const jwt = require("jsonwebtoken");
 const BattleState = require("./enums/BattleState");
+const bcrypt = require("bcrypt");
 
 // Read GraphQL schema and resolvers
 const { resolvers } = require("./graphql/resolvers");

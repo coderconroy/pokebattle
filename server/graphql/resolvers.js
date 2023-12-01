@@ -146,7 +146,7 @@ const resolvers = {
                     inDeck: inDeck,
                 };
             });
-            
+
             // Check all deck cards are also part of the collection
             if (deckSize !== 6) {
                 throw new Error("All card IDs must be in the user collection");
@@ -154,9 +154,25 @@ const resolvers = {
 
             // Update the user's collection in the database
             const updatedUser = await ds.updateUser(user.id, {
-                collection: updatedCollection
+                collection: updatedCollection,
             });
 
+            return updatedUser;
+        },
+        updateUserDetails: async (_, { firstName, lastName, username, email, password }, { ds, currentUser }) => {
+            // Verify current userr
+            const user = await verifyCurrentUser(ds, currentUser);
+
+            // Call the updateUser function from the data source
+            const updatedUser = await ds.updateUser(user.id, {
+                firstName: firstName,
+                lastName: lastName,
+                username: username,
+                email: email,
+                password: password,
+            });
+
+            // Return the updated user details
             return updatedUser;
         },
         requestBattle: async (_, { userId }, { ds, currentUser }) => {
@@ -489,7 +505,6 @@ const resolvers = {
         },
         claimPokeAlert: (_, { pokeAlertId }) => {},
         deletePokeAlert: (_, { pokeAlertId }) => true,
-        updateUserDetails: (_, { id, firstName, lastName, username, email, password }) => {},
     },
     AuthPayload: {
         // Assuming AuthPayload contains token and user
