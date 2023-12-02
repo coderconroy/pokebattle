@@ -15,61 +15,17 @@
           title-classes="nav-link"
           icon="ti-game"
         >
-        <!-- <a class="dropdown-item" href="/battle-page">Active Battle Page</a> -->
+        <a class="dropdown-item" @click.prevent="redirectToBattleReqPage">Battle Requests</a>
+        <a class="dropdown-item" @click.prevent="redirectToBattleHistPage">Battles History</a>
         <a class="dropdown-item" @click.prevent="redirectToBattlePage">Active Battle Page</a>
         </drop-down>
-        <!-- <div class="dropdown">
-          <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="ti-game"></i> Battle Page
-          </button>
-          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <a class="dropdown-item" href="/battle-page">Active Battle Page</a>
-
-          </div>
-        </div> -->
-        <!-- <sidebar-link to="/battle-page" name="Battle Page" icon="ti-game" /> -->
-        <sidebar-link to="/notifications" name="Notifications" icon="ti-bell" />
+        <!-- <sidebar-link to="/notifications" name="Notifications" icon="ti-bell" /> -->
         <sidebar-link to="/poke-discovered" name="Poke Discovered" icon="ti-gift" />
       </template>
       <mobile-menu>
-        <li class="nav-item">
-          <a class="nav-link">
-            <i class="ti-panel"></i>
-            <p>Stats</p>
-          </a>
-        </li>
-        <drop-down
-          class="nav-item"
-          title="5 Notifications"
-          title-classes="nav-link"
-          icon="ti-bell"
-        >
-          <a class="dropdown-item">Notification 1</a>
-          <a class="dropdown-item">Notification 2</a>
-          <a class="dropdown-item">Notification 3</a>
-          <a class="dropdown-item">Notification 4</a>
-          <a class="dropdown-item">Another notification</a>
-        </drop-down>
-        <li class="nav-item">
-          <a class="nav-link">
-            <i class="ti-settings"></i>
-            <p>Settings</p>
-          </a>
-        </li>
-        <!-- <drop-down class="nav-item" title-classes="nav-link" icon="ti-user">
-          <a ref="logoutLink" class="dropdown-item" href="/login">Logout</a>
-        </drop-down> -->
         <drop-down class="nav-item" title-classes="nav-link" icon="ti-user" @click="onLogoutClick">
           <a class="dropdown-item" href="/login">Logout</a>
         </drop-down>
-        <!-- <div class="dropdown">
-          <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="ti-user"></i>
-          </button>
-          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <a class="dropdown-item" href="/login" v-on:click="onLogoutClick">Logout</a>
-          </div>
-        </div> -->
         <li class="divider"></li>
       </mobile-menu>
     </side-bar>
@@ -123,6 +79,16 @@ export default {
       } else {
         console.error("Sidebar component is not initialized.");
       }
+    },
+    redirectToBattleReqPage() {
+      // Handle the routing logic here
+      const router = useRouter();
+      this.$router.push('/battle-req'); // Replace 'battle-page' with your actual route name
+    },
+    redirectToBattleHistPage() {
+      // Handle the routing logic here
+      const router = useRouter();
+      this.$router.push('/battle-hist'); // Replace 'battle-page' with your actual route name
     },
     redirectToBattlePage() {
       // Handle the routing logic here

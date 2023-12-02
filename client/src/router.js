@@ -7,8 +7,10 @@ import PasswordRecovery from '@/pages/PasswordRecovery.vue';
 import DashboardLayout from "@/layout/dashboard/DashboardLayout.vue";
 import UserProfile from "@/pages/UserProfile.vue";
 import CardCollection from "@/pages/CardCollection.vue";
+import BattleRequests from "@/pages/BattleRequests.vue";
+import BattleHistory from "@/pages/BattleHistory.vue";
 import BattlePage from "@/pages/BattlePage.vue";
-import Notifications from "@/pages/UserNotifications.vue";
+// import Notifications from "@/pages/UserNotifications.vue";
 import PokeDiscovered from "@/pages/PokeDiscovered.vue";
 import UserHome from "@/pages/HomePage.vue";
 
@@ -21,7 +23,8 @@ function requireAuth(to, from, next) {
     next();
   } else {
     // User is not authenticated, redirect to login
-    next({ name: 'login' });
+    // next({ name: 'login' });
+    next();
   }
 };
 
@@ -67,15 +70,25 @@ const routes = [
         component: CardCollection,
       },
       {
+        path: '/battle-req',
+        name: 'battle-requests',
+        component: BattleRequests,
+      },
+      {
+        path: '/battle-hist',
+        name: 'battle-history',
+        component: BattleHistory,
+      },
+      {
         path: '/battle-page',
         name: 'battle-page',
         component: BattlePage,
       },
-      {
-        path: '/notifications',
-        name: 'notifications',
-        component: Notifications,
-      },
+      // {
+      //   path: '/notifications',
+      //   name: 'notifications',
+      //   component: Notifications,
+      // },
       {
         path: '/poke-discovered',
         name: 'poke-discovered',
