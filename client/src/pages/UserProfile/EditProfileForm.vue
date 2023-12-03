@@ -84,26 +84,81 @@
     </div>
   </card>
 </template>
+
+
 <script>
+import { ref, onMounted } from 'vue';
+import gql from 'graphql-tag';
+import { useQuery, useMutation } from '@vue/apollo-composable';
+
+// GraphQL query for fetching current user details
+const CURRENT_USER_QUERY = gql`
+  query CurrentUser {
+    currentUser {
+      email
+      firstName
+      lastName
+      username
+    }
+  }
+`;
+
+const UPDATE_USER_MUTATION = gql`
+  mutation UpdateUser($email: String!, $firstName: String!, $lastName: String!, $username: String!) {
+    updateUser(email: $email, firstName: $firstName, lastName: $lastName, username: $username) {
+      email
+      firstName
+      lastName
+      username
+    }
+  }
+`;
+
 export default {
-  data() {
-    return {
-      user: {
-        username: "abc",
-        email: "abc@xyz.com",
-        firstName: "FirstName",
-        lastName: "LastName",
-        city: "Los Angeles",
-        state: "California",
-        country: "United States",
-      },
+  setup() {
+    const user = ref({
+      username: "",
+      email: "",
+      firstName: "",
+      lastName: "",
+      city: "",
+      state: "",
+      country: "",
+    });
+
+    const { result, loading, error, refetch } = useQuery(CURRENT_USER_QUERY);
+
+    onMounted(() => {
+      refetch().then(response => {
+
+        if (response.data && response.data.currentUser) {
+          user.value = { ...response.data.currentUser };
+        }
+      }).catch(err => {
+        console.error('Error fetching user details:', err);
+      });
+    });
+
+    const { mutate: updateUser } = useMutation(UPDATE_USER_MUTATION);
+
+    const updateProfile = () => {
+      updateUser({
+        email: user.value.email,
+        firstName: user.value.firstName,
+        lastName: user.value.lastName,
+        username: user.value.username
+      }).then(response => {
+        console.log('User updated:', response);
+      }).catch(err => {
+        console.error('Error updating user:', err);
+      });
     };
-  },
-  methods: {
-    updateProfile() {
-      alert("Your data: " + JSON.stringify(this.user));
-    },
+
+    return { user, updateProfile, loading, error };
   },
 };
 </script>
+
+
 <style></style>
+
