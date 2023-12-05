@@ -1,42 +1,193 @@
+<!-- 
 <template>
-  <div class="card-container">
+  <div class="card-container" v-if="!loading">
     <div v-for="(card, index) in cards" :key="index" class="card">
       <div class="card-image">
-        <img :src="card.image" alt="Card Image">
+        <img :src="card.image" alt="Card image">
       </div>
       <div class="card-content">
-        <h3>{{ card.title }}</h3>
+        <h3>{{ card.name }}</h3> 
         <p>{{ card.description }}</p>
+        <p> {{ card.hp }}</p>
       </div>
       <div class="card-selection">
-        <input type="checkbox" :id="'checkbox-' + index" v-model="card.selected" />
-        <label :for="'checkbox-' + index">Select</label>
+        <input type="checkbox" :id="'checkbox-' + index" v-model="card.inDeck" />
+        <label :for="'checkbox-' + index">In Deck</label>
       </div>
     </div>
   </div>
+  <div v-if="loading">Loading...</div>
+  <div v-if="error">Error loading cards.</div>
 </template>
 
+<script>
+import { ref, onMounted } from 'vue';
+import gql from 'graphql-tag';
+import { useQuery } from '@vue/apollo-composable';
+
+const CARD_COLLECTION_QUERY = gql`
+query {
+  currentUser {
+    username
+    collection {
+      card {
+        name
+        hp
+        attack {
+          damage
+        }
+        images {
+          small
+        }
+      }
+      inDeck
+    }
+  }
+}`;
+
+export default {
+  setup() {
+    const cards = ref([]);
+
+    const { result, loading, error, refetch } = useQuery(CARD_COLLECTION_QUERY);
+
+    onMounted(() => {
+      refetch().then(response => {
+        if (response.data && response.data.currentUser && response.data.currentUser.collection) {
+          cards.value = response.data.currentUser.collection.map((item, index) => ({
+            name: item.card.name, // Extract card name
+            hp: `Health: ${item.card.hp}`,
+            description: `Attack: ${item.card.attack.damage}`,
+            image: item.card.images.small,
+            inDeck: item.inDeck
+          }));
+        }
+      }).catch(err => {
+        console.error('Error fetching card details:', err);
+      });
+    });
+
+    return { cards, loading, error };
+  },
+};
+</script> -->
+
+<template>
+  <div class="card-container" v-if="!loading">
+    <!-- Card Display Loop -->
+    <div v-for="(card, index) in cards" :key="index" class="card">
+      <div class="card-image">
+        <img :src="card.image" alt="Card image">
+      </div>
+      <div class="card-content">
+        <h3>{{ card.name }}</h3>
+        <p>{{ card.description }}</p>
+        <p>{{ card.hp }}</p>
+      </div>
+      <div class="card-selection">
+        <input type="checkbox" :id="'checkbox-' + index" v-model="card.inDeck" :disabled="selectedCount >= 6 && !card.inDeck" />
+        <label :for="'checkbox-' + index">In Deck</label>
+      </div>
+    </div>
+  </div>
+  <div v-if="loading">Loading...</div>
+  <div v-if="error">Error loading cards.</div>
+
+  <!-- Confirm Button -->
+  <button @click="confirmSelection" :disabled="selectedCount !== 6">Confirm Selection</button>
+</template>
 
 <script>
+import { ref, computed, onMounted } from 'vue';
+import gql from 'graphql-tag';
+import { useQuery, useMutation } from '@vue/apollo-composable';
+
+// Query
+const CARD_COLLECTION_QUERY = gql`
+query {
+  currentUser {
+    username
+    collection {
+      card {
+        id
+        name
+        hp
+        attack {
+          damage
+        }
+        images {
+          small
+        }
+      }
+      inDeck
+    }
+  }
+}`;
+
+// Mutation
+const UPDATE_USER_DECK_MUTATION = gql`
+mutation UpdateUserDeck($cardIds: [ID!]!) {
+  updateUserDeck(cardIds: $cardIds) {
+    collection {
+      inDeck
+      card {
+        id
+      }
+    }
+  }
+}`;
+
 export default {
-  name: 'CardCollection',
-  data() {
-    return {
-      cards: this.generateDummyCards(6), // Generates 6 dummy cards
+  setup() {
+    const cards = ref([]);
+    const { result, loading, error, refetch } = useQuery(CARD_COLLECTION_QUERY);
+    const { mutate: updateUserDeck } = useMutation(UPDATE_USER_DECK_MUTATION);
+
+    onMounted(() => {
+      refetch().then(response => {
+        if (response.data && response.data.currentUser && response.data.currentUser.collection) {
+          cards.value = response.data.currentUser.collection.map((item, index) => ({
+            name: item.card.name, // Extract card name
+            id: item.card.id,
+            hp: `Health: ${item.card.hp}`,
+            description: `Attack: ${item.card.attack.damage}`,
+            image: item.card.images.small,
+            inDeck: item.inDeck
+          }));
+        }
+      }).catch(err => {
+        console.error('Error fetching card details:', err);
+      });
+    });
+
+    // Computed property to count selected cards
+    const selectedCount = computed(() => {
+      return cards.value.filter(card => card.inDeck).length;
+    });
+
+    // Confirm selection method
+    const confirmSelection = () => {
+      const selectedCardIds = cards.value
+        .filter(card => card.inDeck)
+        .map(card => card.id);
+      
+      
+
+      updateUserDeck({ cardIds: selectedCardIds })
+        .then(response => {
+          console.log('Deck updated:', response);
+        })
+        .catch(err => {
+          console.error('Error updating deck:', err);
+        });
     };
-  },
-  methods: {
-    generateDummyCards(numberOfCards) {
-      return Array.from({ length: numberOfCards }, (_, index) => ({
-        title: `Card ${index + 1}`,
-        description: `Description for Card ${index + 1}`,
-        selected: false,
-        image: require('@/assets/pokemon_card.jpeg'), // require('path-to-image.jpg'), // Replace with your image path
-      }));
-    },
+
+    return { cards, selectedCount, confirmSelection, loading, error };
   },
 };
 </script>
+
+
 
 
 <style scoped>

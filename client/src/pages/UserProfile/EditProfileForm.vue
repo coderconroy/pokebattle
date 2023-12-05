@@ -1,7 +1,7 @@
 <template>
   <card class="card" title="Edit Profile">
     <div>
-      <form @submit.prevent>
+      <form @submit.prevent = "updateProfile">
         <div class="row">
           <div class="col-md-6">
             <fg-input
@@ -104,14 +104,14 @@ const CURRENT_USER_QUERY = gql`
 `;
 
 const UPDATE_USER_MUTATION = gql`
-  mutation UpdateUser($email: String!, $firstName: String!, $lastName: String!, $username: String!) {
-    updateUser(email: $email, firstName: $firstName, lastName: $lastName, username: $username) {
+  mutation UpdateUserDetails($firstName: String!, $lastName: String!, $username: String!, $email: String!) {
+    updateUserDetails(firstName: $firstName, lastName: $lastName, username: $username, email: $email) {
       email
       firstName
       lastName
       username
-    }
   }
+}
 `;
 
 export default {
@@ -139,19 +139,34 @@ export default {
       });
     });
 
-    const { mutate: updateUser } = useMutation(UPDATE_USER_MUTATION);
+    const { mutate: UpdateUserDetails } = useMutation(UPDATE_USER_MUTATION, {
+      onCompleted : () => {
+        console.log("compelted")
+        refetch();
+      }
+    });
 
-    const updateProfile = () => {
-      updateUser({
-        email: user.value.email,
-        firstName: user.value.firstName,
-        lastName: user.value.lastName,
-        username: user.value.username
-      }).then(response => {
+    const updateProfile = async () => {
+      console.log('button pressed');
+
+      // Check if all required fields are provided
+      if (!user.value.email || !user.value.firstName || !user.value.lastName || !user.value.username) {
+        console.error('All fields are required');
+        return; // Exit the function if any field is missing
+      }
+
+      try {
+        console.log(user.value.email)
+        const response = await UpdateUserDetails({
+            email: user.value.email,
+            firstName: user.value.firstName,
+            lastName: user.value.lastName,
+            username: user.value.username,
+        });
         console.log('User updated:', response);
-      }).catch(err => {
+      } catch (err) {
         console.error('Error updating user:', err);
-      });
+      }
     };
 
     return { user, updateProfile, loading, error };

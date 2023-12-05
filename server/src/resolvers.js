@@ -183,6 +183,7 @@ const resolvers = {
         },
         updateUserDetails: async (_, { firstName, lastName, username, email, password }, { ds, currentUser }) => {
             // Verify current userr
+            console.log("entered");
             const user = await verifyCurrentUser(ds, currentUser);
 
             // Call the updateUser function from the data source
@@ -193,6 +194,8 @@ const resolvers = {
                 email: email,
                 password: password,
             });
+
+            
 
             // Return the updated user details
             return updatedUser;
