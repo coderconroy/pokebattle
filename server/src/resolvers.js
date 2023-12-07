@@ -201,6 +201,7 @@ const resolvers = {
             return updatedUser;
         },
         requestBattle: async (_, { userId }, { ds, currentUser }) => {
+            console.log(userId);
             // Verify current user and get both user details
             const requestingUser = await verifyCurrentUser(ds, currentUser);
             const requestedUser = await ds.getUser(userId);

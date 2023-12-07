@@ -13,6 +13,7 @@ import BattlePage from "@/pages/BattlePage.vue";
 // import Notifications from "@/pages/UserNotifications.vue";
 import PokeDiscovered from "@/pages/PokeDiscovered.vue";
 import UserHome from "@/pages/HomePage.vue";
+//import BattlePage from "@/pages/BattlePage.vue"
 
 import { isAuthenticated } from '@/pages/UserLogin.vue';
 
@@ -37,6 +38,12 @@ const routes = [
     path: '/login',
     name: 'login',
     component: Login
+  },
+  {
+    path: '/battle/:battleId',
+    name: 'battle',
+    component: BattlePage,
+    props: true // Pass route params as props to the component
   },
   {
     path: '/signup',
