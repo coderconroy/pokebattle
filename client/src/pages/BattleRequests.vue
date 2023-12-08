@@ -80,14 +80,23 @@ export default {
     `;
 
     const CURRENT_USER_QUERY = gql`
-      query CurrentUser {
-        currentUser {
-          id
-          username
-          lastName
-        }
+    query CurrentUser {
+  currentUser {
+    battles {
+      state
+      playerOne {
+        username
       }
-    `;
+      playerTwo {
+        username
+      }
+      id
+    }
+    username
+  }
+}`;
+
+    
 
     const REQUEST_BATTLE_MUTATION = gql`
       mutation RequestBattle($userId: ID!) {
@@ -150,6 +159,8 @@ const REJECT_BATTLE_MUTATION = gql`
     const selectedUserId = ref('');
     const fetchError = ref(null);
     const sentUsernames = ref([]);
+    const receivedUsernames = ref([]);
+    
 
     const { result: usersResult, refetch: fetchUsers } = useQuery(USERS_QUERY);
     const { result: currentUserResult, refetch: fetchCurrentUser } = useQuery(CURRENT_USER_QUERY);
@@ -157,7 +168,8 @@ const REJECT_BATTLE_MUTATION = gql`
     const { result: userBattlesResult, refetch: fetchUserBattles } = useQuery(USER_BATTLES_QUERY);
     const { mutate: acceptBattle, error: acceptBattleError } = useMutation(ACCEPT_BATTLE_MUTATION);
     const { mutate: rejectBattle, error: rejectBattleError } = useMutation(REJECT_BATTLE_MUTATION);
-    const receivedUsernames = ref([]);
+    const router = useRouter();
+    
  
     
 
@@ -168,36 +180,17 @@ onMounted(async () => {
     await fetchUsers();
     await fetchCurrentUser();
     await fetchUserBattles();
+    updateSentAndReceivedUsernames();
 
-    if (currentUserResult.value?.currentUser) {
-      const currentUserData = currentUserResult.value.currentUser;
-      users.value = usersResult.value?.users.filter(user => user.id !== currentUserData.id) || [];
+
+    if (currentUserResult?.value?.currentUser) {
+      const currentUserData = currentUserResult?.value?.currentUser;
+      users.value = usersResult?.value?.users?.filter(user => user.id !== currentUserData?.id) || [];
 
       
       
       // Process battles for sent usernames
-      const battles = userBattlesResult.value?.userBattles || [];
-      console.log(battles);
-      sentUsernames.value = battles
-        .filter(battle => battle.playerOne.username === currentUserData.username && battle.playerOne.battles.some(b => b.state === 'REQUESTED'))
-        .map(battle => ({ username: battle.playerTwo.username, status: 'REQUESTED' }));
-      
-      console.log("sent");
-      console.log(sentUsernames.value);
-
-      
-
-      // Process battles for received usernames
-      receivedUsernames.value = battles
-        .filter(battle => battle.playerTwo.username === currentUserData.username && battle.playerTwo.battles.some(b => b.state === 'REQUESTED'))
-        .map(battle => ({
-          username: battle.playerOne.username,
-          status: 'REQUESTED',
-          battleId: battle.id // Assuming each battle has an 'id' field
-        }));
-
-      console.log("recieved");
-      console.log(receivedUsernames.value);
+     
     }
     
   } catch (err) {
@@ -216,6 +209,7 @@ const handleAccept = async (request) => {
     //er.push({name: 'home'});
     router.push({ name: 'battle-hist' }); 
     await fetchUserBattles();
+    updateSentAndReceivedUsernames();
   } catch (err) {
     console.error('Error accepting battle request:', err.message);
   }
@@ -229,11 +223,14 @@ const handleReject = async (request, index) => {
 
     // Remove the request from the list
     receivedUsernames.value.splice(index, 1);
+    updateSentAndReceivedUsernames();
 
     // Optionally, you might want to refetch battles here
     // await fetchUserBattles();
   } catch (err) {
     console.error('Error rejecting battle request:', err.message);
+    await fetchUserBattles();
+    updateSentAndReceivedUsernames();
   }
 };
 
@@ -265,11 +262,11 @@ const handleReject = async (request, index) => {
 
 const submitRequest = async () => {
   if (selectedUserId.value !== '') {
-    const user = users.value.find(u => u.id === selectedUserId.value);
+    const user = users?.value?.find(u => u.id === selectedUserId?.value);
 
     // Check if the user is already in the sentUsernames or receivedUsernames lists
-    const isRequestSent = sentUsernames.value.some(u => u.username === user.username);
-    const isRequestReceived = receivedUsernames.value.some(u => u.username === user.username);
+    const isRequestSent = sentUsernames?.value?.some(u => u.username === user.username);
+    const isRequestReceived = receivedUsernames?.value?.some(u => u.username === user.username);
 
     if (!isRequestSent && !isRequestReceived) {
       try {
@@ -278,6 +275,7 @@ const submitRequest = async () => {
 
         // Refetch battles to update the tables
         await fetchUserBattles();
+        updateSentAndReceivedUsernames();
       } catch (err) {
         console.error('Error sending battle request:', err.message);
       }
@@ -291,6 +289,64 @@ const submitRequest = async () => {
   }
 };
 
+// const updateSentAndReceivedUsernames = () => {
+//   const currentUserData = currentUserResult?.value?.currentUser;
+//   if (currentUserData) {
+
+//     console.log('Battles playerOne:', userBattlesResult?.value?.userBattles);
+//     console.log('curent name:', currentUserData?.username);
+//     // Filter battles for sent requests
+//     sentUsernames.value = userBattlesResult?.value?.userBattles
+//       .filter(battle => battle.playerOne?.username === currentUserData?.username && 
+//                         battle.playerOne?.battles.some(b => b.state === 'REQUESTED'))
+//       .map(battle => ({ username: battle.playerTwo?.username, status: 'REQUESTED' }));
+
+//     // Filter battles for received requests
+//     console.log('sentusernames:', sentUsernames);
+//     receivedUsernames.value = userBattlesResult.value?.userBattles
+//       .filter(battle => battle.playerTwo?.username === currentUserData.username && 
+//                         battle.playerTwo?.battles.some(b => b.state === 'REQUESTED'))
+//       .map(battle => ({
+//           username: battle.playerOne?.username,
+//           status: 'REQUESTED',
+//           battleId: battle.id
+//         }));
+//   }
+// };
+
+const updateSentAndReceivedUsernames = () => {
+  const currentUserData = currentUserResult?.value?.currentUser;
+
+  if (currentUserData && currentUserData.battles) {
+    // Reset the arrays
+    sentUsernames.value = [];
+    receivedUsernames.value = [];
+
+    currentUserData.battles.forEach(battle => {
+      if (battle.state === 'REQUESTED') {
+        if (battle.playerOne?.username === currentUserData.username) {
+          // Current user is playerOne, so this is a sent request
+          sentUsernames.value.push({
+            username: battle.playerTwo?.username,
+            status: 'REQUESTED'
+          });
+        } else if (battle.playerTwo?.username === currentUserData.username) {
+          // Current user is playerTwo, so this is a received request
+          receivedUsernames.value.push({
+            username: battle.playerOne?.username,
+            status: 'REQUESTED',
+            battleId: battle.id // Assuming each battle has an 'id' field
+          });
+        }
+      }
+    });
+
+    console.log('Sent Usernames:', sentUsernames.value);
+    console.log('Received Usernames:', receivedUsernames.value);
+  }
+};
+
+
 
 
 
@@ -302,7 +358,8 @@ const submitRequest = async () => {
       handleReject,
       sentUsernames,
       receivedUsernames,
-      fetchError
+      fetchError,
+      updateSentAndReceivedUsernames
     };
   }
 };

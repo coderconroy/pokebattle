@@ -9,7 +9,7 @@ import UserProfile from "@/pages/UserProfile.vue";
 import CardCollection from "@/pages/CardCollection.vue";
 import BattleRequests from "@/pages/BattleRequests.vue";
 import BattleHistory from "@/pages/BattleHistory.vue";
-import BattlePage from "@/pages/BattlePage.vue";
+import BattlePage from "@/pages/BattlePage_latest.vue";
 // import Notifications from "@/pages/UserNotifications.vue";
 import PokeDiscovered from "@/pages/PokeDiscovered.vue";
 import UserHome from "@/pages/HomePage.vue";
