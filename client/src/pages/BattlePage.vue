@@ -1,56 +1,4 @@
-<!-- <template>
-  <div class="battle-container">
-    <div v-if="loading">Loading...</div>
-    <div v-else-if="battleDetails">
-      
-      <div class="cards-section">
-        <h3>{{ otherUser.username }}'s Cards</h3>
-        <div class="health-bar-container">
-        <div class="health-bar-label">Health Bar</div>
-        <div class="health-bar-outer">
-          <div class="health-bar-inner" :style="{ width: otherUserHealthPercentage + '%' }"></div>
-        </div>
-        <div class="health-label">{{ otherUserCurrentHP }} / {{ otherUserTotalHP }}</div>
-      </div>
-        <div class="cards-row">
-          <div class="card" v-for="n in otherUserCards.length" :key="n">
-            <img src="https://i.ebayimg.com/images/g/F1MAAOSwY29jyw~t/s-l1200.webp" alt="Hidden Card">
-            <h5>Unknown Card</h5>
-          </div>
-        </div>
-      </div>
 
-     
-      <div class="cards-section">
-        <h3>Your Cards</h3>
-        <div class="health-bar-container">
-        <div class="health-bar-label">Health Bar</div>
-        <div class="health-bar-outer">
-          <div class="health-bar-inner" :style="{ width: currentUserHealthPercentage + '%' }"></div>
-        </div>
-        <div class="health-label">{{ currentUserCurrentHP }} / {{ currentUserTotalHP }}</div>
-      </div>
-        <div class="cards-row">
-          <div class="card" v-for="card in currentUserCards" :key="card.id" @click="selectCard(card)">
-            <img :src="card.card.images.small" alt="Card Image">
-            <h5>{{ card.card.name }}</h5>
-            <p>HP: {{ card.currentHp }} / {{ card.card.hp }}</p>
-            <p>Damage: {{ card.card.attack.damage }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div v-else-if="fetchError">Error: {{ fetchError }}</div>
-
-  
-    <div v-if="selectedCard" class="modal">
-      <div class="modal-content">
-        <span class="close-button" @click="closeModal">&times;</span>
-        <p>Selected "{{ selectedCard.card.name }}" card</p>
-      </div>
-    </div>
-  </div>
-</template> -->
 
 
 <template>
@@ -68,15 +16,29 @@
           <div class="health-label">{{ otherUserCurrentHP }} / {{ otherUserTotalHP }}</div>
         </div>
         <div class="cards-row">
-          <div class="card" v-for="n in otherUserCards.length" :key="n">
-            <img src="https://i.ebayimg.com/images/g/F1MAAOSwY29jyw~t/s-l1200.webp" alt="Hidden Card">
-            <h5>Unknown Card</h5>
-          </div>
-        </div>
+    <div class="card" v-for="card in otherUserCards" :key="card.id">
+      <!-- Display the actual card image if revealed, else show the hidden card image -->
+      <img v-if="card.revealed" :src="card.card.images.small" alt="Card Image">
+      <img v-else src="https://i.ebayimg.com/images/g/F1MAAOSwY29jyw~t/s-l1200.webp" alt="Hidden Card">
+      
+      <!-- Display the actual card name if revealed, else show 'Unknown Card' -->
+      <h5 v-if="card.revealed">{{ card.card.name }}</h5>
+      <h5 v-else>Unknown Card</h5>
+      
+      <!-- Display additional card details if revealed -->
+      <div v-if="card.revealed">
+        <p>HP: {{ card.currentHp }} / {{ card.card.hp }}</p>
+        <p>Damage: {{ card.card.attack.damage }}</p>
+        <!-- Include any other details you wish to display here -->
+      </div>
+    </div>
+  </div>
       </div>
 
-      <!-- Current User's Cards -->
-      <div class="cards-section">
+      
+
+    <!-- Current User's Cards -->
+    <div class="cards-section">
         <h3 class="card-title">Your Cards</h3>
         <div class="health-bar-container">
           <div class="health-bar-label">Health Bar</div>
@@ -86,16 +48,22 @@
           <div class="health-label">{{ currentUserCurrentHP }} / {{ currentUserTotalHP }}</div>
         </div>
         <div class="cards-row">
-          <div class="card" v-for="card in currentUserCards" :key="card.id" @click="selectCard(card)">
-            <img :src="card.card.images.small" alt="Card Image">
-            <h5>{{ card.card.name }}</h5>
-            <p>HP: {{ card.currentHp }} / {{ card.card.hp }}</p>
-            <p>Damage: {{ card.card.attack.damage }}</p>
-          </div>
-        </div>
+      <div class="card" v-for="card in currentUserCards" :key="card.id" :class="{ 'grayed-out': card.isDead }">
+        <img :src="card.card.images.small" alt="Card Image">
+        <h5>{{ card.card.name }}</h5>
+        <p>HP: {{ card.currentHp }} / {{ card.card.hp }}</p>
+        <p>Damage: {{ card.card.attack.damage }}</p>
+        <!-- Select Button for each card -->
+        <button @click="onCardSelected(card.id)" :disabled="card.isDead">Select</button>
+      </div>
+    </div>
+
       </div>
     </div>
     <div v-else-if="fetchError">Error: {{ fetchError }}</div>
+
+
+   
 
     <!-- Modal for selected card -->
     <div v-if="selectedCard" class="modal">
@@ -105,18 +73,48 @@
       </div>
     </div>
 
-    <!-- Dialog for showing round results -->
-    <!-- <div v-if="showRoundResultsDialog">
-      
-    </div> -->
+    
+
+    <!-- UI for card selection -->
+<div v-if="showCardSelector" class="card-selection-ui">
+  
+
+  <div class="cards-row">
+    <div class="card" v-for="card in currentUserCards" :key="card.id" :class="{ 'grayed-out': card.isDead === true }">
+      <img :src="card.card.images.small" alt="Card Image">
+      <h5>{{ card.card.name }}</h5>
+      <p>HP: {{ card.currentHp }} / {{ card.card.hp }}</p>
+      <p>Damage: {{ card.card.attack.damage }}</p>
+      <!-- Select Button for each card -->
+      <button @click="onCardSelected(card.id)" :disabled="card.isDead === true">Select</button>
+    </div>
   </div>
+</div>
+
+<!-- Dialog for round results -->
+<div v-if="showDialog && roundDetails.value" class="popup">
+  <div class="popup-content">
+    <h3>Round Results</h3>
+    <p>Card Played by Player One: {{ roundDetails.value.playerOneCard.card.name }}</p>
+    <p>Card Played by Player Two: {{ roundDetails.value.playerTwoCard.card.name }}</p>
+    <p>Round Start HP: {{ roundDetails.value.roundStartHp }}</p>
+    <p>Round End HP: {{ roundDetails.value.roundEndHp }}</p>
+    <!-- Close button or timeout logic here -->
+  </div>
+</div>
+
+<round-status-mini-bar :rounds="battleDetails?.rounds" />
+      
+    </div> 
+  
 </template>
 
 
 
 
 <script>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue';
+import RoundStatusMiniBar from '../components/RoundStatusMiniBar.vue';
 import { useQuery, useMutation } from '@vue/apollo-composable';
 import gql from 'graphql-tag';
 
@@ -356,20 +354,73 @@ export default {
       required: true
     }
   },
+
+  components: {
+    RoundStatusMiniBar
+  },
   setup(props) {
     const battleDetails = ref(null);
     const fetchError = ref(null);
     const loading = ref(true);
     const currentUser = ref({username:null});
+    const selectedCard = ref(null);
+    const showDialog = ref(false);
+    const roundDetails = ref(null);
 
     const { result, error, refetch } = useQuery(BATTLE_QUERY, 
        { battleId: props.battleId }
     );
 
     const { result: currentUserResult } = useQuery(CURRENT_USER_QUERY);
-    //const [playCard, { loading: playCardLoading, error: playCardError }] = useMutation(PLAY_CARD_MUTATION);
+    const { mutate: playCard } = useMutation(PLAY_CARD_MUTATION, {
+      onCompleted: (data) => {
+        console.log("Play card mutation completed", data);
+        // Optionally, you might want to refetch queries or update local state here
+      },
+      onError: (error) => {
+        console.error("Error playing card:", error);
+      }
+    });
 
-    onMounted(async () => {
+
+    const intervalId = ref(null);
+
+    // Method to fetch the latest battle data
+    const fetchBattleData = async () => {
+      try {
+        await refetch();
+        // Add any additional logic if needed after refetching
+      } catch (err) {
+        console.error("Error fetching battle data:", err);
+      }
+    };
+
+    // onMounted(async () => {
+    //   try {
+    //     await refetch();
+    //     if (result.value) {
+    //       battleDetails.value = result.value.battle;
+    //     }
+    //     if (currentUserResult.value) {
+    //       currentUser.value.username = currentUserResult.value.currentUser.username;
+    //     }
+    //     if (currentUser.value.username === battleDetails.value.playerOne.username) {
+    //       handlePlayerOneAlgorithm();
+    //     } else if (currentUser.value.username === battleDetails.value.playerTwo.username) {
+    //       handlePlayerTwoAlgorithm();
+    //     }
+
+    //     intervalId.value = setInterval(fetchBattleData, 5000);
+    //     console.log(currentUserCards.value);
+        
+    //   } catch (err) {
+    //     fetchError.value = err.message;
+    //   } finally {
+    //     loading.value = false;
+    //   }
+    // });
+
+    const fetchAndProcessBattleData = async () => {
       try {
         await refetch();
         if (result.value) {
@@ -378,22 +429,170 @@ export default {
         if (currentUserResult.value) {
           currentUser.value.username = currentUserResult.value.currentUser.username;
         }
+        if (currentUser.value.username === battleDetails.value.playerOne.username) {
+          handlePlayerOneAlgorithm();
+        } else if (currentUser.value.username === battleDetails.value.playerTwo.username) {
+          handlePlayerTwoAlgorithm();
+        }
+        console.log(currentUserCards.value);
       } catch (err) {
         fetchError.value = err.message;
-      } finally {
-        loading.value = false;
+      }finally {
+    loading.value = false;
+    console.log('Loading state updated:', loading.value);
+  }
+    };
+
+    onMounted(async () => {
+      await fetchAndProcessBattleData();
+      intervalId.value = setInterval(fetchAndProcessBattleData, 5000);
+    });
+
+    onBeforeUnmount(() => {
+      // Clear the interval when the component is about to unmount
+      if (intervalId.value) {
+        clearInterval(intervalId.value);
       }
     });
+
+    const { mutate: viewBattle } = useMutation(VIEW_BATTLE_MUTATION, {
+      onCompleted: (data) => {
+       
+        
+        // Optionally, update local state or refetch queries here
+        refetch();
+      },
+      onError: (error) => {
+        console.error("Error viewing battle:", error);
+      }
+    });
+
+
+
+    const handlePlayerOneAlgorithm = async () => {
+      
+      const rounds = battleDetails.value.rounds;
+      console.log(rounds);
+     
+      const latestRound = rounds[rounds.length - 1];
+      
+      console.log(latestRound.playerOneCard);
+      if(latestRound.playerOneCard === null){
+        if(rounds.length>1){
+          const previousRound = rounds[rounds.length - 2];
+          console.log(previousRound);
+          
+
+          if(!previousRound.playerOneViewed){
+            console.log("not viewed");
+            
+            showDialogWithRoundResults(previousRound);
+            await viewBattle({ battleId: props.battleId  });
+        // Update battle details after viewing the battle
+            refetch(); // Assuming refetch() is the method to update battleDetails
+          }
+          else{
+         
+          showCardSelectionUI();
+          refetch();
+          }
+        } else if(rounds.length == 1){
+       
+          showCardSelectionUI();
+          refetch();
+        }
+      } else{
+      
+        alert("cannot play card");
+      }
+  
+     
+  
+
+    
+ 
+    };
+
+    const handlePlayerTwoAlgorithm = async () => {
+      
+      const rounds = battleDetails.value.rounds;
+      const latestRound = rounds[rounds.length - 1];
+      
+      
+      if(latestRound.playerTwoCard === null){
+        if(rounds.length>1){
+          const previousRound = rounds[rounds.length - 2];
+          console.log(previousRound);
+          
+
+          if(!previousRound.playerTwoViewed){
+            console.log("not viewed")
+            showDialogWithRoundResults(previousRound);
+            await viewBattle({ battleId: props.battleId } );
+        // Update battle details after viewing the battle
+            refetch(); // refetch() is the method to update battleDetails
+          }
+          else{
+         
+          showCardSelectionUI();
+          refetch();
+        }
+
+        } else if(rounds.length == 1){
+        
+          showCardSelectionUI();
+          refetch();
+        }
+      } else{
+ 
+        alert("cannot play card");
+      }
+  
+     
+  
+
+    
+ 
+    };
+
+    const initializeCards = (cards) => {
+  return cards.map(card => ({ ...card, revealed: false }));
+};
+
+
+
+    const showDialogWithRoundResults = (round) => {
+      console.log("entering dialog box");
+      console.log(round);
+      roundDetails.value = round;
+      showDialog.value = true;
+      console.log("dialog");
+
+      setTimeout(() => {
+      showDialog.value = false;
+      }, 10000);
+    };
+
+    const closeDialog = () => {
+      showDialog.value = false;
+      roundDetails.value = null; // Optionally reset the round details
+    };
+      
 
     const currentUserIsPlayerOne = computed(() => {
       return currentUser.value && currentUser.value.username === battleDetails.value?.playerOne.username;
     });
 
     const currentUserCards = computed(() => {
+
+      
       return currentUserIsPlayerOne.value 
         ? battleDetails.value?.playerOneCards 
         : battleDetails.value?.playerTwoCards;
+      
     });
+
+    
 
     const otherUser = computed(() => {
       return currentUserIsPlayerOne.value 
@@ -408,7 +607,7 @@ export default {
     });
 
     const hovering = ref(false);
-    const selectedCard = ref(null);
+    //const selectedCard = ref(null);
 
     const selectCard = (card) => {
       selectedCard.value = card;
@@ -438,79 +637,75 @@ export default {
       return cards.reduce((acc, card) => acc + card.currentHp, 0);
     }
 
-//     const handlePlayerOneAlgorithm = async () => {
-//       const latestRound = battleDetails.value.rounds[battleDetails.value.rounds.length - 1];
+    // Reactive state to control the visibility of card selection UI
+const showCardSelector = ref(false);
 
-//       // Check if playerOne has not played a card in the latest round
-//       if (!latestRound.playerOneCard) {
-//         if (battleDetails.value.rounds.length > 1) {
-//           const previousRound = battleDetails.value.rounds[battleDetails.value.rounds.length - 2];
+const showCardSelectionUI = () => {
 
-//           // Show results of the previous round if not viewed
-//           if (!previousRound.playerOneViewed) {
-//             await showDialogWithRoundResults(previousRound);
-//             // Player can play a card after closing the dialog
-//           }
-//         }
+  // Set showCardSelector to true to display the card selection interface in the template
+  showCardSelector.value = true;
+};
 
-//         showCardSelectionUI();
-//       }
-//     };
 
-//     const handlePlayerTwoAlgorithm = async () => {
-//       const latestRound = battleDetails.value.rounds[battleDetails.value.rounds.length - 1];
+const onCardSelected = (selectedCardId) => {
 
-//       // Check if playerOne has not played a card in the latest round
-//       if (!latestRound.playerTwoCard) {
-//         if (battleDetails.value.rounds.length > 1) {
-//           const previousRound = battleDetails.value.rounds[battleDetails.value.rounds.length - 2];
 
-//           // Show results of the previous round if not viewed
-//           if (!previousRound.playerTwoViewed) {
-//             await showDialogWithRoundResults(previousRound);
-//             // Player can play a card after closing the dialog
-//           }
-//         }
+  if (!selectedCardId) {
+    console.error("Selected Card ID is undefined or null.");
+    return;
+  }
 
-//         // Allow playerOne to play a card
-//         showCardSelectionUI();
-//       }
-//     };
+  playCard({battleId: props.battleId, battleCardId: selectedCardId })
+    .then(response => {
+ 
+      battleDetails.value = response.data.playCardInBattle;
+      showCardSelector.value = false;
+    })
+    .catch(err => {
+      console.error("Error playing card:", err);
+      alert(`Error: ${err.message}`);
+    });
+};
 
-//     const roundResultsData = ref(null); // Holds the data to be shown in the dialog
+const processRoundResults = (roundResults) => {
+  // Example logic - modify according to your actual data structure
+  otherUserCards.forEach(card => {
+    if (roundResults.playerOneCard.battleCard?.id === card.id || roundResults.playerTwoCard.battleCard?.id === card.id) {
+      card.revealed = true;
+    }
+  });
 
-// const showDialogWithRoundResults = (round) => {
-//   roundResultsData.value = round; // Populate the dialog with round data
-//   showRoundResultsDialog.value = true; // Show the dialog
-// };
+  // Update the state to reflect the changes
+  otherUserCards = [...otherUserCards];
+};
 
-// const closeRoundResultsDialog = () => {
-//   showRoundResultsDialog.value = false; // Close the dialog
-//   roundResultsData.value = null; // Clear the dialog data
-//   // Here you can add logic to fetch new data or update the state
-//   // Example: refetchBattle();
-// };
 
-// const updateBattleState = (newBattleState) => {
-//       battleDetails.value = newBattleState;
-//       // Continue the game based on the updated state
-//       if (currentUserIsPlayerOne.value) {
-//         handlePlayerOneAlgorithm();
-//       } else {
-//         handlePlayerTwoAlgorithm();
-//       }
-//     };
+    // Method to set the selected card
+    const setSelectedCard = (card) => {
+     
+      selectedCard.value = card;
+      // You might trigger some UI change here to show the card is selected
+    };
 
-//     // Select a card and play it
-//     const selectCard = (cardId) => {
-//       playCard(
-//          { battleId: props.battleId, battleCardId: cardId }
-//       ).then(response => {
-//         updateBattleState(response.data.playCardInBattle);
-//       }).catch(err => {
-//         console.error("Error playing card:", err);
-//       });
-//     };
+    
+
+    const updateRevealedCards = () => {
+  if (battleDetails.value && battleDetails.value.rounds) {
+    const lastRound = battleDetails.value.rounds[battleDetails.value.rounds.length - 1];
+    
+    otherUserCards.value.forEach(card => {
+      if (lastRound.playerOneCard.battleCard.id === card.id || lastRound.playerTwoCard.battleCard.id === card.id) {
+        card.revealed = true;
+      }
+    });
+  }
+};
+
+    console.log(showDialog.value);
+
+
+    
+
 
     return {
       battleDetails,
@@ -530,7 +725,27 @@ export default {
       otherUserTotalHP,
       otherUserCurrentHP,
       otherUserHealthPercentage,
+      handlePlayerOneAlgorithm,
+      handlePlayerTwoAlgorithm,
+      showCardSelectionUI,
+      onCardSelected,
+      setSelectedCard,
+      playCard,
+      showDialogWithRoundResults,
+      closeDialog,
+      viewBattle,
+      showDialog,
+      processRoundResults,
+      otherUserCards,
+      initializeCards,
+      updateRevealedCards,
+      intervalId,
+      fetchBattleData,
+      onBeforeUnmount,
+      fetchAndProcessBattleData
+
       //closeRoundResultsDialog
+      
 
     };
   }
@@ -733,6 +948,57 @@ export default {
   font-size: 1.5em; /* Larger font size */
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Optional: Text shadow for better visibility */
 }
+
+.dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure it's on top */
+}
+
+.dialog-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 400px;
+}
+
+.grayed-out {
+  filter: grayscale(100%); /* Convert the image to grayscale */
+  pointer-events: none; /* Disable interactions with the card */
+}
+
+.grayed-out button {
+  background-color: #ccc; /* Gray background for the button */
+  color: #666; /* Darker text color to indicate it's disabled */
+  cursor: not-allowed; /* Change the cursor to indicate it's not clickable */
+}
+
+popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .popup-content {
+    text-align: center;
+  }
+
+
 
 
 </style>

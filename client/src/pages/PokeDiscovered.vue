@@ -28,6 +28,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import gql from 'graphql-tag';
 import { useQuery, useMutation } from '@vue/apollo-composable';
 
+
 const POKE_ALERT_QUERY = gql`
   query PokeAlert {
     pokeAlert {

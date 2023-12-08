@@ -148,6 +148,7 @@ export default {
 
     const updateProfile = async () => {
       console.log('button pressed');
+      
 
       // Check if all required fields are provided
       if (!user.value.email || !user.value.firstName || !user.value.lastName || !user.value.username) {
