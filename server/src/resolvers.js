@@ -449,8 +449,8 @@ const resolvers = {
                 currentRound.playerTwoCard.roundEndHp = playerTwoBattleCard.currentHp;
 
                 // Record that the player who played second has viewed the round result
-                if (isPlayerOne) currentRound.playerOneViewed = true;
-                else currentRound.playerTwoViewed = true;
+                // if (isPlayerOne) currentRound.playerOneViewed = true;
+                // else currentRound.playerTwoViewed = true;
 
                 // Check if battle is over
                 const playerOneRemainCards = battle.playerOneCards.filter((card) => !card.isDead).length;
