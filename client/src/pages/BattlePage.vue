@@ -17,7 +17,7 @@
                   <div v-for="card in otherUserCards" :key="card.id">
                     <div :class="{ 'opp-card': true, 'dead-card': isCardDead(card) }">
                     <img src="https://i.ebayimg.com/images/g/F1MAAOSwY29jyw~t/s-l1200.webp" alt="Hidden Card">
-                    <h5>Unknown Card</h5>
+                    <!-- <h5>Unknown Card</h5> -->
                     </div>
                   </div>
                 </div>
@@ -60,7 +60,7 @@
                         <img :src="card.card.images.small" alt="Card Image" />
                         <h5>{{ card.card.name }}</h5>
                         <p>HP: {{ card.currentHp }} / {{ card.card.hp }}</p>
-                        <p>Damage: {{ card.card.attack.damage }}</p>
+                        <p>Attack Power: {{ card.card.attack.damage }}</p>
                         <!-- Select Button for each card -->
                         <button @click="onCardSelected(card.id)" :disabled="card.isDead">Select</button>
                     </div>
@@ -114,6 +114,7 @@
         <div v-if="showOppTurnDialog" class="modal">
           <div class="modal-content">
             <p>{{ oppTurnDialogMessage }}</p>
+            <button @click="goToHome" class="small-home-button">Go to Home</button>
           </div>
         </div>
 
@@ -847,9 +848,18 @@ export default {
     padding: 2px 5px; /* Optional: Adds padding around the text */
     border-radius: 4px; /* Optional: Rounds the corners of the label background */
 }
+
+/* .modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+} */
+
 .modal {
-    display: block; /* Hidden by default; can use v-show or v-if in template */
+    display: flex;
     position: fixed;
+    justify-content: center;
+    align-items: center;
     z-index: 1;
     left: 0;
     top: 0;
@@ -859,12 +869,29 @@ export default {
     background-color: rgba(0, 0, 0, 0.4);
 }
 
+/* .modal-content {
+  width: 50%;
+  padding: 20px;
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+} */
+
 .modal-content {
+    width: 50%;
     background-color: #fefefe;
     margin: 15% auto;
     padding: 20px;
     border: 1px solid #888;
+    border-radius: 5px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+}
+
+/* Add media query for smaller screens */
+@media (max-width: 600px) {
+  .modal-content {
     width: 80%;
+  }
 }
 
 .close-button {
@@ -967,7 +994,7 @@ export default {
     border-radius: 8px;
     padding: 10px;
     width: 150px;
-    height: 250px;
+    height: 200px;
     text-align: center;
     display: flex;
     flex-direction: column;
