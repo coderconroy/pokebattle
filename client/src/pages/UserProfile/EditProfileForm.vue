@@ -131,6 +131,8 @@ export default {
     onMounted(() => {
       refetch().then(response => {
 
+        console.log("Fetched User Data:", response.data);
+
         if (response.data && response.data.currentUser) {
           user.value = { ...response.data.currentUser };
         }
@@ -159,10 +161,10 @@ export default {
       try {
         console.log(user.value.email)
         const response = await UpdateUserDetails({
-            email: user.value.email,
-            firstName: user.value.firstName,
-            lastName: user.value.lastName,
-            username: user.value.username,
+            email: user?.value?.email,
+            firstName: user?.value?.firstName,
+            lastName: user?.value?.lastName,
+            username: user?.value?.username,
         });
         console.log('User updated:', response);
       } catch (err) {

@@ -103,12 +103,19 @@
 
         <round-status-mini-bar :rounds="battleDetails?.rounds" />
 
+        <div v-if="gameEnded" class="modal">
+          <div class="modal-content">
+            <p>Winner is: {{ winner }}</p>
+            <button @click="goToHome" class="small-home-button">Go to Home</button>
+          </div>
+        </div>
         
     </div>
 </template>
 
 <script>
 import { ref, onMounted, computed, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
 import RoundStatusMiniBar from "../components/RoundStatusMiniBar.vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import gql from "graphql-tag";
@@ -116,6 +123,9 @@ import gql from "graphql-tag";
 const BATTLE_QUERY = gql`
     query Query($battleId: ID!) {
         battle(id: $battleId) {
+            winner {
+              username
+            }
             playerOne {
                 username
             }
@@ -348,23 +358,12 @@ export default {
         },
     },
 
-    
-
- 
-  
-
-  
-  
-
-
-
-
-
     components: {
         RoundStatusMiniBar,
     },
     setup(props) {
         const battleDetails = ref(null);
+        const router = useRouter();
         const fetchError = ref(null);
         const loading = ref(true);
         const currentUser = ref({ username: null });
@@ -575,6 +574,26 @@ export default {
                 : battleDetails.value?.playerOneCards;
         });
 
+        const gameEnded = computed(() => {
+          const allPlayerOneCardsDead = battleDetails?.value?.playerOneCards?.every(card => card.isDead);
+          const allPlayerTwoCardsDead = battleDetails?.value?.playerTwoCards?.every(card => card.isDead);
+
+          return allPlayerOneCardsDead || allPlayerTwoCardsDead;
+        });
+
+
+        const winner = computed(() => {
+          if (!gameEnded.value) 
+            return null;
+
+          console.log(`Winner:${battleDetails?.value?.winner?.username}`);
+          return battleDetails?.value?.winner?.username;
+        });
+
+        const goToHome = () => {
+          router.push('/home'); // Replace '/home' with the path to your home page
+        };
+
         const hovering = ref(false);
         //const selectedCard = ref(null);
 
@@ -722,6 +741,9 @@ export default {
             fetchAndProcessBattleData,
             stateMessage,
             resultMessage,
+            gameEnded,
+            winner,
+            goToHome
             
 
             //closeRoundResultsDialog
@@ -990,4 +1012,18 @@ popup {
   font-size: 1.5em;
   color: green;
 }
+
+.small-home-button {
+  width: auto; /* Or specify a fixed width, e.g., 150px */
+  padding: 5px 10px; /* Adjust padding to make button smaller */
+  margin: 0 auto; /* Centers the button in the modal */
+  display: block; /* Makes margin auto effective for centering */
+}
+
+/* Optional: Add more styling to make the button visually distinct */
+.small-home-button:hover {
+  background-color: #e0e0e0; /* Light grey background on hover */
+  cursor: pointer; /* Changes the cursor to a pointer */
+}
+
 </style>
