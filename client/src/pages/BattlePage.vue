@@ -13,8 +13,16 @@
                     <div class="health-label">{{ otherUserCurrentHP }} / {{ otherUserTotalHP }}</div>
                 </div>
                 <div class="cards-row">
-                    <div class="card" v-for="card in otherUserCards" :key="card.id">
-                        <!-- Display the actual card image if revealed, else show the hidden card image -->
+                  <!-- <div class="card" v-for="n in otherUserCards.length" :key="n"> -->
+                  <div v-for="card in otherUserCards" :key="card.id">
+                    <div :class="{ 'opp-card': true, 'dead-card': isCardDead(card) }">
+                    <img src="https://i.ebayimg.com/images/g/F1MAAOSwY29jyw~t/s-l1200.webp" alt="Hidden Card">
+                    <h5>Unknown Card</h5>
+                    </div>
+                  </div>
+                </div>
+                <!-- <div class="cards-row">
+                    <div class="opp-card" v-for="card in otherUserCards" :key="card.id">
                         <img v-if="card.revealed" :src="card.card.images.small" alt="Card Image" />
                         <img
                             v-else
@@ -22,13 +30,12 @@
                             alt="Hidden Card"
                         />
 
-                        <!-- Display the actual card name if revealed, else show 'Unknown Card' -->
                         <h5 v-if="card.revealed">{{ card.card?.name }}</h5>
                         <h5 v-else>Unknown Card</h5>
 
                         
                     </div>
-                </div>
+                </div> -->
             </div>
 
             <!-- Current User's Cards -->
@@ -102,6 +109,13 @@
         </div>
 
         <round-status-mini-bar :rounds="battleDetails?.rounds" />
+
+        <!-- Dialog for opponent's turn -->
+        <div v-if="showOppTurnDialog" class="modal">
+          <div class="modal-content">
+            <p>{{ oppTurnDialogMessage }}</p>
+          </div>
+        </div>
 
         <div v-if="gameEnded" class="modal">
           <div class="modal-content">
@@ -370,6 +384,8 @@ export default {
         const selectedCard = ref(null);
         const showDialog = ref(false);
         const roundDetails = ref(null);
+        const oppTurnDialogMessage = ref('');
+        const showOppTurnDialog = ref(false);
 
         const { result, error, refetch } = useQuery(BATTLE_QUERY, { battleId: props.battleId });
 
@@ -493,10 +509,14 @@ export default {
                 // Check if opponent has played card
                 if (currentRound.playerTwoCard === null) {
                     stateMessage.value = "Choose a card to play...";
+                    showOppTurnDialog.value = false;
                 } else {
                     stateMessage.value = "Your opponent has played. Choose a card to play...";
+                    showOppTurnDialog.value = false;
                 }
             } else {
+                showOppTurnDialog.value = true;
+                oppTurnDialogMessage.value = 'Waiting for the opponent to play.';
                 stateMessage.value = "You have played your card. Waiting for other player...";
             }
         };
@@ -525,16 +545,24 @@ export default {
                 // Check if opponet has played card
                 if (currentRound.playerOneCard === null) {
                     stateMessage.value = "Choose a card to play...";
+                    showOppTurnDialog.value = false;
                 } else {
                     stateMessage.value = "Your opponent has played. Choose a card to play...";
+                    showOppTurnDialog.value = false;
                 }
             } else {
+                showOppTurnDialog.value = true;
+                oppTurnDialogMessage.value = 'Waiting for the opponent to play.';
                 stateMessage.value = "You have played your card. Waiting for other player...";
             }
         };
 
         const initializeCards = (cards) => {
             return cards.map((card) => ({ ...card, revealed: false }));
+        };
+
+        const isCardDead = (card) => {
+          return card.isDead;
         };
 
         const showDialogWithRoundResults = (round) => {
@@ -743,7 +771,10 @@ export default {
             resultMessage,
             gameEnded,
             winner,
-            goToHome
+            goToHome,
+            oppTurnDialogMessage,
+            showOppTurnDialog,
+            isCardDead
             
 
             //closeRoundResultsDialog
@@ -772,6 +803,12 @@ export default {
 .hover-dialog {
     position: absolute;
     /* Adjust positioning as needed */
+}
+
+.dead-card {
+  opacity: 0.5; /* Grey out the card */
+  pointer-events: none; /* Make the card non-interactive */
+  /* Additional styling for dead card */
 }
 
 .health-bar-container {
@@ -925,12 +962,12 @@ export default {
     margin-top: auto;
 }
 
-.opponent-card {
+.opp-card {
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 10px;
     width: 150px;
-    height: 200px;
+    height: 250px;
     text-align: center;
     display: flex;
     flex-direction: column;
