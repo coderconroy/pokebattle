@@ -17,7 +17,7 @@
         >
         <a class="dropdown-item" @click.prevent="redirectToBattleReqPage">Battle Requests</a>
         <a class="dropdown-item" @click.prevent="redirectToBattleHistPage">Battles History</a>
-        <a class="dropdown-item" @click.prevent="redirectToBattlePage">Active Battle Page</a>
+        <!-- <a class="dropdown-item" @click.prevent="redirectToBattlePage">Active Battle Page</a> -->
         </drop-down>
         <!-- <sidebar-link to="/notifications" name="Notifications" icon="ti-bell" /> -->
         <sidebar-link to="/poke-discovered" name="Poke Discovered" icon="ti-gift" />
@@ -90,11 +90,11 @@ export default {
       const router = useRouter();
       this.$router.push('/battle-hist'); // Replace 'battle-page' with your actual route name
     },
-    redirectToBattlePage() {
-      // Handle the routing logic here
-      const router = useRouter();
-      this.$router.push('/battle-page'); // Replace 'battle-page' with your actual route name
-    },
+    // redirectToBattlePage() {
+    //   // Handle the routing logic here
+    //   const router = useRouter();
+    //   this.$router.push('/battle-page'); // Replace 'battle-page' with your actual route name
+    // },
     onLogoutClick() {
       // Clear the token from localStorage
       localStorage.removeItem('authToken');

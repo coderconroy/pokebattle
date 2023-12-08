@@ -111,7 +111,7 @@
       <table>
         <thead>
           <tr>
-            <th v-for="header in gamesPlayed" :key="header">{{ header }}</th>
+            <th v-for="header in gamesPlayed" :key="header" :style="{ width: matchStatisticsColumnWidth }">{{ header }}</th>
           </tr>
         </thead>
         <tbody>
@@ -143,13 +143,14 @@
       <table>
         <thead>
           <tr>
-            <th v-for="header in activeColumns" :key="header">{{ header }}</th>
+            <th v-for="header in activeColumns" :key="header" :style="{ width: activeBattleColumnWidth }">{{ header }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(battle, index) in activeData" :key="index">
             <td>{{ battle.opponent }}</td>
             <td><router-link :to="battle.battleLink">Go to Battle</router-link></td>
+            <!-- <td>{{ battle.currentTurn }}</td> -->
           </tr>
         </tbody>
       </table>
@@ -158,7 +159,7 @@
 
   
       <!-- History of Battles Table -->
-      <h3>History of Battles</h3>
+      <!-- <h3>History of Battles</h3>
       <div class="scrollable-table">
         <PaperTable :columns="historyColumns" :data="historyData">
           <template v-slot:row="{ row }">
@@ -166,12 +167,33 @@
             <td>{{ row.result }}</td>
           </template>
         </PaperTable>
+      </div> -->
+
+      <h3>History of Battles</h3>
+      <div class="scrollable-table">
+        <table>
+          <thead>
+            <tr>
+              <th v-for="header in historyColumns" :key="header" :style="{ width: historyBattleColumnWidth }">{{ header }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(battle, index) in historyData" :key="index">
+              <td>{{ battle.opponent }}</td>
+              <td>{{ battle.result }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+
+
+
+
     </div>
   </template>
   
   <script>
-  import { ref, onMounted } from 'vue';
+  import { computed, ref, onMounted } from 'vue';
   import { useQuery } from '@vue/apollo-composable';
   import gql from 'graphql-tag';
   import PaperTable from '@/components/PaperTable.vue'; // Adjust path as needed
@@ -204,18 +226,40 @@
       RouterLink
     },
     setup() {
-      const router = useRouter();
+      const route = useRouter();
       const currentUser = ref(null);
       const userStats = ref([]); // Placeholder for user stats
       const activeData = ref([]);
       const historyData = ref([]);
       const fetchError = ref(null);
   
-      const gamesPlayed = ['Games Played', 'Active Matches', 'Won', 'Lost', 'Tied']; // Adjust as needed
-      const activeColumns = ['Opponent', 'Battle Link'];
-      const historyColumns = ['Opponent', 'Result'];
+      // const gamesPlayed = ['Games Played', 'Active Matches', 'Won', 'Lost', 'Tied']; // Adjust as needed
+      // const activeColumns = ['Opponent', 'Battle Link'];
+      // const historyColumns = ['Opponent', 'Result'];
+
+      // const matchStatisticsColumnWidth = computed(() => {
+      //   return 100 / gamesPlayed?.value?.length + '%';
+      // });
+
+      // const activeBattleColumnWidth = computed(() => {
+      //   return 100 / activeColumns?.value?.length + '%';
+      // });
+
+      // const historyBattleColumnWidth = computed(() => {
+      //   return 100 / historyColumns?.value?.length + '%';
+      // });
+
+      const gamesPlayed = ref(['Games Played', 'Active Matches', 'Won', 'Lost', 'Tied']);
+      const activeColumns = ref(['Opponent', 'Battle Link']);
+      const historyColumns = ref(['Opponent', 'Result']);
+
+      const matchStatisticsColumnWidth = computed(() => 100 / gamesPlayed.value.length + '%');
+      const activeBattleColumnWidth = computed(() => 100 / activeColumns.value.length + '%');
+      const historyBattleColumnWidth = computed(() => 100 / historyColumns.value.length + '%');
   
       const { result: currentUserBattlesResult, refetch: fetchCurrentUserBattles } = useQuery(CURRENT_USER_BATTLES_QUERY);
+
+      // const currentTurn = route.currentRoute.value.params.currentTurn;
      
   
       onMounted(async () => {
@@ -250,6 +294,7 @@
               .map(battle => ({
                 opponent: currentUserData.username === battle.playerOne.username ? battle.playerTwo.username : battle.playerOne.username,
                 battleLink: '/battle/' + battle.id // Modify according to how you generate battle links
+                // userTurn: currentTurn
               }));
   
             // Process history of battles
@@ -273,7 +318,10 @@
         historyColumns,
         historyData,
         fetchError,
-        userStats
+        userStats,
+        matchStatisticsColumnWidth,
+        activeBattleColumnWidth,
+        historyBattleColumnWidth
       };
     }
   };
@@ -290,7 +338,14 @@
   border-collapse: collapse;
 }
 
-th, td {
+.scrollable-table th {
+  font-weight: bold !important;
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd; /* Optional */
+}
+
+td {
   padding: 8px;
   text-align: left;
   border-bottom: 1px solid #ddd; /* Optional */

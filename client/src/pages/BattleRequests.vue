@@ -35,33 +35,29 @@
     </div>
 
     <!-- Received Requests Table -->
-    <!-- Received Requests Table -->
-    
-    <!-- Received Requests Table -->
-<!-- Received Requests Table -->
-<h3>Received Requests</h3>
-<div class="scrollable-table">
-  <table>
-    <thead>
-      <tr>
-        <th>Username</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(request, index) in receivedUsernames" :key="index">
-        <td>{{ request.username }}</td>
-        <td>
-          <button @click="handleAccept(request)">Accept</button>
-          <button @click="() => handleReject(request, index)">Reject</button>
-        
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
+    <h3>Received Requests</h3>
+    <div class="scrollable-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(request, index) in receivedUsernames" :key="index">
+            <td>{{ request.username }}</td>
+            <td>
+              <button @click="handleAccept(request)" class="action-button">Accept</button>
+              <button @click="() => handleReject(request, index)" class="action-button">Reject</button>
+            
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+
+  </div>
 
 </template>
 
@@ -423,6 +419,8 @@ th, td {
 }
 
 th {
+  width: 50%; /* Each column will take half the width of the table */
+  font-weight: bold; /* Make headings bold */
   background-color: #f2f2f2;
 }
 
@@ -435,7 +433,7 @@ tr:hover {
 }
 
 .action-button {
-  /* margin-left: 10px; Uncomment if needed */
+  /* margin-left: 10px; */
   margin-right: 10px;
 }
 </style>

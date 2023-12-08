@@ -149,8 +149,8 @@ export default {
           cards.value = response.data.currentUser.collection.map((item, index) => ({
             name: item.card.name, // Extract card name
             id: item.card.id,
-            hp: `Health: ${item.card.hp}`,
-            description: `Attack: ${item.card.attack.damage}`,
+            hp: `Health Points: ${item.card.hp}`,
+            description: `Attack Power: ${item.card.attack.damage}`,
             image: item.card.images.small,
             inDeck: item.inDeck
           }));
