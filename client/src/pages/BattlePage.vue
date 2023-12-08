@@ -23,15 +23,10 @@
                         />
 
                         <!-- Display the actual card name if revealed, else show 'Unknown Card' -->
-                        <h5 v-if="card.revealed">{{ card.card.name }}</h5>
+                        <h5 v-if="card.revealed">{{ card.card?.name }}</h5>
                         <h5 v-else>Unknown Card</h5>
 
-                        <!-- Display additional card details if revealed -->
-                        <div v-if="card.revealed">
-                            <p>HP: {{ card.currentHp }} / {{ card.card.hp }}</p>
-                            <p>Damage: {{ card.card.attack.damage }}</p>
-                            <!-- Include any other details you wish to display here -->
-                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -107,6 +102,8 @@
         </div>
 
         <round-status-mini-bar :rounds="battleDetails?.rounds" />
+
+        
     </div>
 </template>
 
@@ -351,6 +348,18 @@ export default {
         },
     },
 
+    
+
+ 
+  
+
+  
+  
+
+
+
+
+
     components: {
         RoundStatusMiniBar,
     },
@@ -428,6 +437,8 @@ export default {
                     handlePlayerTwoAlgorithm();
                 }
                 console.log(currentUserCards.value);
+              
+
             } catch (err) {
                 fetchError.value = err.message;
             } finally {
@@ -448,6 +459,7 @@ export default {
             }
         });
 
+        
         const { mutate: viewBattle } = useMutation(VIEW_BATTLE_MUTATION, {
             onCompleted: (data) => {
                 // Optionally, update local state or refetch queries here
@@ -644,20 +656,32 @@ export default {
             // You might trigger some UI change here to show the card is selected
         };
 
-        const updateRevealedCards = () => {
-            if (battleDetails.value && battleDetails.value.rounds) {
-                const lastRound = battleDetails.value.rounds[battleDetails.value.rounds.length - 1];
+        // const updateRevealedCards = () => {
+        //     if (battleDetails?.value && battleDetails?.value?.rounds) {
+        //         const lastRound = battleDetails?.value?.rounds[battleDetails.value?.rounds?.length - 1];
 
-                otherUserCards.value.forEach((card) => {
-                    if (
-                        lastRound.playerOneCard.battleCard.id === card.id ||
-                        lastRound.playerTwoCard.battleCard.id === card.id
-                    ) {
-                        card.revealed = true;
-                    }
-                });
-            }
-        };
+        //         otherUserCards?.value.forEach((card) => {
+        //             if (
+        //                 lastRound?.playerOneCard?.battleCard?.id === card.id ||
+        //                 lastRound?.playerTwoCard?.battleCard?.id === card.id
+        //             ) {
+        //                 card.revealed = true;
+        //             }
+        //         });
+
+
+        //     }
+
+        //     console.log("revealed cards");
+
+        //     console.log(otherUserCards.value);
+
+
+
+
+        // };
+
+       
 
         console.log(showDialog.value);
 
@@ -692,13 +716,13 @@ export default {
             processRoundResults,
             otherUserCards,
             initializeCards,
-            updateRevealedCards,
             intervalId,
             fetchBattleData,
             onBeforeUnmount,
             fetchAndProcessBattleData,
             stateMessage,
             resultMessage,
+            
 
             //closeRoundResultsDialog
         };
@@ -958,5 +982,12 @@ popup {
 
 .popup-content {
     text-align: center;
+}
+
+.battle-ended {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 1.5em;
+  color: green;
 }
 </style>
