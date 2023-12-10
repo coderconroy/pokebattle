@@ -13,29 +13,12 @@
                     <div class="health-label">{{ otherUserCurrentHP }} / {{ otherUserTotalHP }}</div>
                 </div>
                 <div class="cards-row">
-                  <!-- <div class="card" v-for="n in otherUserCards.length" :key="n"> -->
-                  <div v-for="card in otherUserCards" :key="card.id">
-                    <div :class="{ 'opp-card': true, 'dead-card': isCardDead(card) }">
-                    <img src="https://i.ebayimg.com/images/g/F1MAAOSwY29jyw~t/s-l1200.webp" alt="Hidden Card">
-                    <!-- <h5>Unknown Card</h5> -->
+                    <div v-for="card in otherUserCards" :key="card.id">
+                        <div :class="{ 'opp-card': true, 'dead-card': isCardDead(card) }">
+                            <img src="https://i.ebayimg.com/images/g/F1MAAOSwY29jyw~t/s-l1200.webp" alt="Hidden Card">
+                        </div>
                     </div>
-                  </div>
                 </div>
-                <!-- <div class="cards-row">
-                    <div class="opp-card" v-for="card in otherUserCards" :key="card.id">
-                        <img v-if="card.revealed" :src="card.card.images.small" alt="Card Image" />
-                        <img
-                            v-else
-                            src="https://i.ebayimg.com/images/g/F1MAAOSwY29jyw~t/s-l1200.webp"
-                            alt="Hidden Card"
-                        />
-
-                        <h5 v-if="card.revealed">{{ card.card?.name }}</h5>
-                        <h5 v-else>Unknown Card</h5>
-
-                        
-                    </div>
-                </div> -->
             </div>
 
             <!-- Current User's Cards -->
@@ -51,17 +34,12 @@
                     <div class="health-label">{{ currentUserCurrentHP }} / {{ currentUserTotalHP }}</div>
                 </div>
                 <div class="cards-row">
-                    <div
-                        class="card"
-                        v-for="card in currentUserCards"
-                        :key="card.id"
-                        :class="{ 'grayed-out': card.isDead }"
-                    >
+                    <div class="card" v-for="card in currentUserCards" :key="card.id"
+                        :class="{ 'grayed-out': card.isDead }">
                         <img :src="card.card.images.small" alt="Card Image" />
                         <h5>{{ card.card.name }}</h5>
                         <p>HP: {{ card.currentHp }} / {{ card.card.hp }}</p>
                         <p>Attack Power: {{ card.card.attack.damage }}</p>
-                        <!-- Select Button for each card -->
                         <button @click="onCardSelected(card.id)" :disabled="card.isDead">Select</button>
                     </div>
                 </div>
@@ -80,17 +58,12 @@
         <!-- UI for card selection -->
         <div v-if="showCardSelector" class="card-selection-ui">
             <div class="cards-row">
-                <div
-                    class="card"
-                    v-for="card in currentUserCards"
-                    :key="card.id"
-                    :class="{ 'grayed-out': card.isDead === true }"
-                >
+                <div class="card" v-for="card in currentUserCards" :key="card.id"
+                    :class="{ 'grayed-out': card.isDead === true }">
                     <img :src="card.card.images.small" alt="Card Image" />
                     <h5>{{ card.card.name }}</h5>
                     <p>HP: {{ card.currentHp }} / {{ card.card.hp }}</p>
                     <p>Damage: {{ card.card.attack.damage }}</p>
-                    <!-- Select Button for each card -->
                     <button @click="onCardSelected(card.id)" :disabled="card.isDead === true">Select</button>
                 </div>
             </div>
@@ -104,7 +77,6 @@
                 <p>Card Played by Player Two: {{ roundDetails?.value?.playerTwoCard.card.name }}</p>
                 <p>Round Start HP: {{ roundDetails?.value?.roundStartHp }}</p>
                 <p>Round End HP: {{ roundDetails?.value?.roundEndHp }}</p>
-                <!-- Close button or timeout logic here -->
             </div>
         </div>
 
@@ -112,19 +84,19 @@
 
         <!-- Dialog for opponent's turn -->
         <div v-if="showOppTurnDialog" class="modal">
-          <div class="modal-content">
-            <p>{{ oppTurnDialogMessage }}</p>
-            <button @click="goToHome" class="small-home-button">Go to Home</button>
-          </div>
+            <div class="modal-content">
+                <p>{{ oppTurnDialogMessage }}</p>
+                <button @click="goToHome" class="small-home-button">Go to Home</button>
+            </div>
         </div>
 
         <div v-if="gameEnded" class="modal">
-          <div class="modal-content">
-            <p>Winner is: {{ winner }}</p>
-            <button @click="goToHome" class="small-home-button">Go to Home</button>
-          </div>
+            <div class="modal-content">
+                <p>Winner is: {{ winner }}</p>
+                <button @click="goToHome" class="small-home-button">Go to Home</button>
+            </div>
         </div>
-        
+
     </div>
 </template>
 
@@ -394,7 +366,7 @@ export default {
         const { mutate: playCard } = useMutation(PLAY_CARD_MUTATION, {
             onCompleted: (data) => {
                 console.log("Play card mutation completed", data);
-                // Optionally, you might want to refetch queries or update local state here
+
             },
             onError: (error) => {
                 console.error("Error playing card:", error);
@@ -413,31 +385,6 @@ export default {
             }
         };
 
-        // onMounted(async () => {
-        //   try {
-        //     await refetch();
-        //     if (result.value) {
-        //       battleDetails.value = result.value.battle;
-        //     }
-        //     if (currentUserResult.value) {
-        //       currentUser.value.username = currentUserResult.value.currentUser.username;
-        //     }
-        //     if (currentUser.value.username === battleDetails.value.playerOne.username) {
-        //       handlePlayerOneAlgorithm();
-        //     } else if (currentUser.value.username === battleDetails.value.playerTwo.username) {
-        //       handlePlayerTwoAlgorithm();
-        //     }
-
-        //     intervalId.value = setInterval(fetchBattleData, 5000);
-        //     console.log(currentUserCards.value);
-
-        //   } catch (err) {
-        //     fetchError.value = err.message;
-        //   } finally {
-        //     loading.value = false;
-        //   }
-        // });
-
         const fetchAndProcessBattleData = async () => {
             try {
                 await refetch();
@@ -453,7 +400,7 @@ export default {
                     handlePlayerTwoAlgorithm();
                 }
                 console.log(currentUserCards.value);
-              
+
 
             } catch (err) {
                 fetchError.value = err.message;
@@ -475,10 +422,9 @@ export default {
             }
         });
 
-        
+
         const { mutate: viewBattle } = useMutation(VIEW_BATTLE_MUTATION, {
             onCompleted: (data) => {
-                // Optionally, update local state or refetch queries here
                 refetch();
             },
             onError: (error) => {
@@ -497,11 +443,9 @@ export default {
 
                 // Check if you have viewed the result of the previous round
                 if (!previousRound.playerOneViewed) {
-                    resultMessage.value = `Previous Round Result: Round ${rounds.length - 1}: Your opponent, ${
-                        battleDetails.value.playerTwo.username
-                    }, played card ${previousRound.playerTwoCard.battleCard.card.name}`;
-                    // Tell the server you have now see the result of the previous round
-                    // await viewBattle({ battleId: props.battleId });
+                    resultMessage.value = `Previous Round Result: Round ${rounds.length - 1}: Your opponent, ${battleDetails.value.playerTwo.username
+                        }, played card ${previousRound.playerTwoCard.battleCard.card.name}`;
+
                 }
             }
 
@@ -533,9 +477,8 @@ export default {
 
                 // Check if you have viewed the result of the previous round
                 if (!previousRound.playerTwoViewed) {
-                    resultMessage.value = `Previous Round Result: Round ${rounds.length - 1}: Your opponent, ${
-                        battleDetails.value.playerOne.username
-                    }, played card ${previousRound.playerOneCard.battleCard.card.name}`;
+                    resultMessage.value = `Previous Round Result: Round ${rounds.length - 1}: Your opponent, ${battleDetails.value.playerOne.username
+                        }, played card ${previousRound.playerOneCard.battleCard.card.name}`;
                     // Tell the server you have now see the result of the previous round
                     // await viewBattle({ battleId: props.battleId });
                 }
@@ -563,7 +506,7 @@ export default {
         };
 
         const isCardDead = (card) => {
-          return card.isDead;
+            return card.isDead;
         };
 
         const showDialogWithRoundResults = (round) => {
@@ -604,23 +547,23 @@ export default {
         });
 
         const gameEnded = computed(() => {
-          const allPlayerOneCardsDead = battleDetails?.value?.playerOneCards?.every(card => card.isDead);
-          const allPlayerTwoCardsDead = battleDetails?.value?.playerTwoCards?.every(card => card.isDead);
+            const allPlayerOneCardsDead = battleDetails?.value?.playerOneCards?.every(card => card.isDead);
+            const allPlayerTwoCardsDead = battleDetails?.value?.playerTwoCards?.every(card => card.isDead);
 
-          return allPlayerOneCardsDead || allPlayerTwoCardsDead;
+            return allPlayerOneCardsDead || allPlayerTwoCardsDead;
         });
 
 
         const winner = computed(() => {
-          if (!gameEnded.value) 
-            return null;
+            if (!gameEnded.value)
+                return null;
 
-          console.log(`Winner:${battleDetails?.value?.winner?.username}`);
-          return battleDetails?.value?.winner?.username;
+            console.log(`Winner:${battleDetails?.value?.winner?.username}`);
+            return battleDetails?.value?.winner?.username;
         });
 
         const goToHome = () => {
-          router.push('/home'); // Replace '/home' with the path to your home page
+            router.push('/home'); // Replace '/home' with the path to your home page
         };
 
         const hovering = ref(false);
@@ -729,7 +672,7 @@ export default {
 
         // };
 
-       
+
 
         console.log(showDialog.value);
 
@@ -776,7 +719,7 @@ export default {
             oppTurnDialogMessage,
             showOppTurnDialog,
             isCardDead
-            
+
 
             //closeRoundResultsDialog
         };
@@ -788,7 +731,8 @@ export default {
 .state-message-box,
 .result-message-box {
     padding: 10px;
-    background-color: #f0f0f0; /* Light grey background */
+    background-color: #f0f0f0;
+    /* Light grey background */
     text-align: center;
     margin-top: 20px;
     border-radius: 5px;
@@ -807,13 +751,16 @@ export default {
 }
 
 .dead-card {
-  opacity: 0.5; /* Grey out the card */
-  pointer-events: none; /* Make the card non-interactive */
-  /* Additional styling for dead card */
+    opacity: 0.5;
+    /* Grey out the card */
+    pointer-events: none;
+    /* Make the card non-interactive */
+    /* Additional styling for dead card */
 }
 
 .health-bar-container {
-    width: 200px; /* Adjust for desired width */
+    width: 200px;
+    /* Adjust for desired width */
     position: relative;
     margin: 10px 0;
 }
@@ -822,7 +769,8 @@ export default {
     font-size: 0.8em;
     color: #333;
     margin-bottom: 5px;
-    text-align: center; /* Center the label above the bar */
+    text-align: center;
+    /* Center the label above the bar */
 }
 
 .health-bar-outer {
@@ -833,7 +781,8 @@ export default {
 
 .health-bar-inner {
     height: 20px;
-    background-color: #4caf50; /* Green color for health */
+    background-color: #4caf50;
+    /* Green color for health */
     border-radius: 4px;
     transition: width 0.3s ease-in-out;
 }
@@ -841,12 +790,16 @@ export default {
 .health-label {
     position: absolute;
     right: 5px;
-    bottom: -20px; /* Adjust this value as needed to move the label below the bar */
+    bottom: -20px;
+    /* Adjust this value as needed to move the label below the bar */
     color: white;
     font-weight: bold;
-    background: rgba(0, 0, 0, 0.6); /* Optional: Adds a background for better readability */
-    padding: 2px 5px; /* Optional: Adds padding around the text */
-    border-radius: 4px; /* Optional: Rounds the corners of the label background */
+    background: rgba(0, 0, 0, 0.6);
+    /* Optional: Adds a background for better readability */
+    padding: 2px 5px;
+    /* Optional: Adds padding around the text */
+    border-radius: 4px;
+    /* Optional: Rounds the corners of the label background */
 }
 
 /* .modal {
@@ -884,14 +837,14 @@ export default {
     padding: 20px;
     border: 1px solid #888;
     border-radius: 5px;
-    box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
 }
 
 /* Add media query for smaller screens */
 @media (max-width: 600px) {
-  .modal-content {
-    width: 80%;
-  }
+    .modal-content {
+        width: 80%;
+    }
 }
 
 .close-button {
@@ -907,6 +860,7 @@ export default {
     text-decoration: none;
     cursor: pointer;
 }
+
 .battle-container {
     padding: 20px;
 }
@@ -1010,15 +964,21 @@ export default {
 }
 
 .opponent-card-image {
-    width: 100%; /* Full width of the card */
-    height: 100%; /* Full height of the card */
+    width: 100%;
+    /* Full width of the card */
+    height: 100%;
+    /* Full height of the card */
 }
 
 .card-title {
-    font-weight: 900; /* Maximum boldness */
-    color: #333; /* Dark color; adjust as needed */
-    font-size: 1.5em; /* Larger font size */
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Optional: Text shadow for better visibility */
+    font-weight: 900;
+    /* Maximum boldness */
+    color: #333;
+    /* Dark color; adjust as needed */
+    font-size: 1.5em;
+    /* Larger font size */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    /* Optional: Text shadow for better visibility */
 }
 
 .dialog {
@@ -1027,11 +987,13 @@ export default {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Semi-transparent background */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000; /* Ensure it's on top */
+    z-index: 1000;
+    /* Ensure it's on top */
 }
 
 .dialog-content {
@@ -1044,14 +1006,19 @@ export default {
 }
 
 .grayed-out {
-    filter: grayscale(100%); /* Convert the image to grayscale */
-    pointer-events: none; /* Disable interactions with the card */
+    filter: grayscale(100%);
+    /* Convert the image to grayscale */
+    pointer-events: none;
+    /* Disable interactions with the card */
 }
 
 .grayed-out button {
-    background-color: #ccc; /* Gray background for the button */
-    color: #666; /* Darker text color to indicate it's disabled */
-    cursor: not-allowed; /* Change the cursor to indicate it's not clickable */
+    background-color: #ccc;
+    /* Gray background for the button */
+    color: #666;
+    /* Darker text color to indicate it's disabled */
+    cursor: not-allowed;
+    /* Change the cursor to indicate it's not clickable */
 }
 
 popup {
@@ -1071,23 +1038,27 @@ popup {
 }
 
 .battle-ended {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 1.5em;
-  color: green;
+    text-align: center;
+    margin-top: 20px;
+    font-size: 1.5em;
+    color: green;
 }
 
 .small-home-button {
-  width: auto; /* Or specify a fixed width, e.g., 150px */
-  padding: 5px 10px; /* Adjust padding to make button smaller */
-  margin: 0 auto; /* Centers the button in the modal */
-  display: block; /* Makes margin auto effective for centering */
+    width: auto;
+    /* Or specify a fixed width, e.g., 150px */
+    padding: 5px 10px;
+    /* Adjust padding to make button smaller */
+    margin: 0 auto;
+    /* Centers the button in the modal */
+    display: block;
+    /* Makes margin auto effective for centering */
 }
 
 /* Optional: Add more styling to make the button visually distinct */
 .small-home-button:hover {
-  background-color: #e0e0e0; /* Light grey background on hover */
-  cursor: pointer; /* Changes the cursor to a pointer */
-}
-
-</style>
+    background-color: #e0e0e0;
+    /* Light grey background on hover */
+    cursor: pointer;
+    /* Changes the cursor to a pointer */
+}</style>

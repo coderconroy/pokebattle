@@ -1,75 +1,40 @@
 <template>
   <card class="card" title="Edit Profile">
     <div>
-      <form @submit.prevent = "updateProfile">
+      <form @submit.prevent="updateProfile">
         <div class="row">
           <div class="col-md-6">
-            <fg-input
-              type="text"
-              label="Username"
-              placeholder="Username"
-              v-model="user.username"
-            >
+            <fg-input type="text" label="Username" placeholder="Username" v-model="user.username">
             </fg-input>
           </div>
           <div class="col-md-6">
-            <fg-input
-              type="email"
-              label="Email"
-              placeholder="Email"
-              v-model="user.email"
-            >
+            <fg-input type="email" label="Email" placeholder="Email" v-model="user.email">
             </fg-input>
           </div>
         </div>
 
         <div class="row">
           <div class="col-md-6">
-            <fg-input
-              type="text"
-              label="First Name"
-              placeholder="First Name"
-              v-model="user.firstName"
-            >
+            <fg-input type="text" label="First Name" placeholder="First Name" v-model="user.firstName">
             </fg-input>
           </div>
           <div class="col-md-6">
-            <fg-input
-              type="text"
-              label="Last Name"
-              placeholder="Last Name"
-              v-model="user.lastName"
-            >
+            <fg-input type="text" label="Last Name" placeholder="Last Name" v-model="user.lastName">
             </fg-input>
           </div>
         </div>
 
         <div class="row">
           <div class="col-md-4">
-            <fg-input
-              type="text"
-              label="City"
-              placeholder="City"
-              v-model="user.city"
-            >
+            <fg-input type="text" label="City" placeholder="City" v-model="user.city">
             </fg-input>
           </div>
           <div class="col-md-4">
-            <fg-input
-              type="text"
-              label="State"
-              placeholder="State"
-              v-model="user.state"
-            >
+            <fg-input type="text" label="State" placeholder="State" v-model="user.state">
             </fg-input>
           </div>
           <div class="col-md-4">
-            <fg-input
-              type="text"
-              label="Country"
-              placeholder="Country"
-              v-model="user.country"
-            >
+            <fg-input type="text" label="Country" placeholder="Country" v-model="user.country">
             </fg-input>
           </div>
         </div>
@@ -142,7 +107,7 @@ export default {
     });
 
     const { mutate: UpdateUserDetails } = useMutation(UPDATE_USER_MUTATION, {
-      onCompleted : () => {
+      onCompleted: () => {
         console.log("compelted")
         refetch();
       }
@@ -150,7 +115,7 @@ export default {
 
     const updateProfile = async () => {
       console.log('button pressed');
-      
+
 
       // Check if all required fields are provided
       if (!user.value.email || !user.value.firstName || !user.value.lastName || !user.value.username) {
@@ -161,10 +126,10 @@ export default {
       try {
         console.log(user.value.email)
         const response = await UpdateUserDetails({
-            email: user?.value?.email,
-            firstName: user?.value?.firstName,
-            lastName: user?.value?.lastName,
-            username: user?.value?.username,
+          email: user?.value?.email,
+          firstName: user?.value?.firstName,
+          lastName: user?.value?.lastName,
+          username: user?.value?.username,
         });
         console.log('User updated:', response);
       } catch (err) {

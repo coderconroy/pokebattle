@@ -51,12 +51,12 @@ export default {
         return;
       }
       // Add logic to handle password update
-      alert("Password update requested:",  + JSON.stringify(this.newPassword));
+      alert("Password update requested:", + JSON.stringify(this.newPassword));
     },
   },
 };
 </script>
 
 <style>
-  /* Add any specific styles for your password update form here */
+/* Add any specific styles for your password update form here */
 </style>

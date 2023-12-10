@@ -1,11 +1,5 @@
 <template>
-  <component
-    :is="tag"
-    @click="hideSidebar"
-    class="nav-item"
-    v-bind="$attrs"
-    tag="li"
-  >
+  <component :is="tag" @click="hideSidebar" class="nav-item" v-bind="$attrs" tag="li">
     <a class="nav-link">
       <slot>
         <i v-if="icon" :class="icon"></i>
@@ -24,10 +18,10 @@ export default {
       default: true,
     },
     addLink: {
-      default: () => {},
+      default: () => { },
     },
     removeLink: {
-      default: () => {},
+      default: () => { },
     },
     sidebar: { // Injecting the sidebar object
       default: () => ({})
@@ -73,6 +67,7 @@ export default {
   /* Example style */
   padding: 0.5rem 1rem;
 }
+
 .nav-link {
   /* Example style */
   color: #333;

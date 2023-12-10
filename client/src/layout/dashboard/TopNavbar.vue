@@ -15,7 +15,6 @@
 
 
 <script>
-// import { isAuthenticated } from '@/pages/UserLogin.vue';
 export default {
   computed: {
     routeName() {
@@ -27,12 +26,6 @@ export default {
     capitalizeFirstLetter(string) {
       return string.charAt(0).toUpperCase() + string.slice(1);
     },
-    // onLogoutClick() {
-    //   // Your logout logic
-    //   isAuthenticated.value = false;
-    //   console.log(`Authenticated (Top): ${isAuthenticated.value}`);
-    //   // Add any additional logic for logout (e.g., redirecting to the login page)
-    // },
   },
 };
 </script>

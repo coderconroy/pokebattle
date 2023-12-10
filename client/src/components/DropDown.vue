@@ -1,17 +1,6 @@
 <template>
-  <component
-    :is="tag"
-    class="dropdown"
-    :class="{ show: isOpen }"
-    @click="toggleDropDown"
-    v-click-outside="closeDropDown"
-  >
-    <a
-      class="dropdown-toggle btn-rotate"
-      :class="titleClasses"
-      href="#"
-      @click.prevent
-    >
+  <component :is="tag" class="dropdown" :class="{ show: isOpen }" @click="toggleDropDown" v-click-outside="closeDropDown">
+    <a class="dropdown-toggle btn-rotate" :class="titleClasses" href="#" @click.prevent>
       <slot name="title">
         <i :class="icon"></i>
         <span class="notification">{{ title }}<b class="caret"></b></span>
@@ -51,7 +40,7 @@ export default {
   directives: {
     clickOutside: {
       beforeMount(el, binding) {
-        el.clickOutsideEvent = function(event) {
+        el.clickOutsideEvent = function (event) {
           // Check if click was outside the el and its children
           if (!(el === event.target || el.contains(event.target))) {
             // Invoke the method directly
@@ -71,13 +60,17 @@ export default {
 
 <style>
 .dropdown {
-  position: relative; /* Ensures the dropdown menu is positioned relative to this container */
+  position: relative;
+  /* Ensures the dropdown menu is positioned relative to this container */
 }
 
 .dropdown-menu {
-  position: absolute; /* Absolutely position the dropdown menu */
-  left: 50%; /* Move to 50% of the parent's width */
-  transform: translateX(-50%); /* Pull back to the left by half of its own width */
+  position: absolute;
+  /* Absolutely position the dropdown menu */
+  left: 50%;
+  /* Move to 50% of the parent's width */
+  transform: translateX(-50%);
+  /* Pull back to the left by half of its own width */
   /* Add other styles like width, background, etc., as necessary */
 }
 </style>

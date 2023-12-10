@@ -28,7 +28,6 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import gql from 'graphql-tag';
 import { useQuery, useMutation } from '@vue/apollo-composable';
 
-
 const POKE_ALERT_QUERY = gql`
   query PokeAlert {
     pokeAlert {
@@ -136,17 +135,13 @@ export default {
 </script>
 
 
-
-
-
-
-
 <style scoped>
 .single-card-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh; /* Full viewport height */
+  height: 100vh;
+  /* Full viewport height */
 }
 
 .card {
@@ -155,19 +150,23 @@ export default {
   padding: 10px;
   width: 300px;
   height: auto;
-  text-align: center; /* Center text and button */
+  text-align: center;
+  /* Center text and button */
 }
 
 .card-image img {
-  width: 100%; /* Sets the image width to fill the container */
-  height: 100%; /* Sets the image height to maintain aspect ratio */
-  object-fit: contain; /* Ensures the image is scaled to maintain its aspect ratio while fitting within the element's content box */
-  border-radius: 5px; /* Optional: for rounded corners */
+  width: 100%;
+  /* Sets the image width to fill the container */
+  height: 100%;
+  /* Sets the image height to maintain aspect ratio */
+  object-fit: contain;
+  /* Ensures the image is scaled to maintain its aspect ratio while fitting within the element's content box */
+  border-radius: 5px;
+  /* Optional: for rounded corners */
 }
 
 .card-action button {
   margin: 10px;
   padding: 5px 10px;
-}
-</style>
+}</style>
 

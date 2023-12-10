@@ -1,4 +1,3 @@
-// main.js or main.ts
 import { createApp, provide, h } from 'vue';
 import { DefaultApolloClient } from '@vue/apollo-composable';
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client/core';
@@ -13,7 +12,7 @@ import SidebarPlugin from "@/components/SidebarPlugin/index";
 
 // HTTP connection to the API
 const httpLink = createHttpLink({
-  uri: 'http://localhost:3000/graphql', // Replace with your GraphQL server URI
+  uri: 'http://localhost:3000/graphql',
 });
 
 // Middleware to attach the token to requests

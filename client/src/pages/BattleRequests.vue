@@ -50,23 +50,20 @@
             <td>
               <button @click="handleAccept(request)" class="action-button">Accept</button>
               <button @click="() => handleReject(request, index)" class="action-button">Reject</button>
-            
+
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-
   </div>
-
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
 import { useQuery, useMutation } from '@vue/apollo-composable';
 import gql from 'graphql-tag';
-import {useRouter} from 'vue-router';
-
+import { useRouter } from 'vue-router';
 
 export default {
   setup() {
@@ -80,7 +77,7 @@ export default {
     `;
 
     const CURRENT_USER_QUERY = gql`
-    query CurrentUser {
+  query CurrentUser {
   currentUser {
     battles {
       state
@@ -95,8 +92,6 @@ export default {
     username
   }
 }`;
-
-    
 
     const REQUEST_BATTLE_MUTATION = gql`
       mutation RequestBattle($userId: ID!) {
@@ -134,7 +129,7 @@ export default {
   }
 `;
 
-const ACCEPT_BATTLE_MUTATION = gql`
+    const ACCEPT_BATTLE_MUTATION = gql`
   mutation AcceptBattle($battleId: ID!) {
     acceptBattle(battleId: $battleId) {
       playerOne {
@@ -144,7 +139,7 @@ const ACCEPT_BATTLE_MUTATION = gql`
   }
 `;
 
-const REJECT_BATTLE_MUTATION = gql`
+    const REJECT_BATTLE_MUTATION = gql`
   mutation RejectBattle($battleId: ID!) {
     rejectBattle(battleId: $battleId) {
       playerTwo {
@@ -160,7 +155,7 @@ const REJECT_BATTLE_MUTATION = gql`
     const fetchError = ref(null);
     const sentUsernames = ref([]);
     const receivedUsernames = ref([]);
-    
+
 
     const { result: usersResult, refetch: fetchUsers } = useQuery(USERS_QUERY);
     const { result: currentUserResult, refetch: fetchCurrentUser } = useQuery(CURRENT_USER_QUERY);
@@ -169,186 +164,117 @@ const REJECT_BATTLE_MUTATION = gql`
     const { mutate: acceptBattle, error: acceptBattleError } = useMutation(ACCEPT_BATTLE_MUTATION);
     const { mutate: rejectBattle, error: rejectBattleError } = useMutation(REJECT_BATTLE_MUTATION);
     const router = useRouter();
-    
- 
-    
 
-    
-
-onMounted(async () => {
-  try {
-    await fetchUsers();
-    await fetchCurrentUser();
-    await fetchUserBattles();
-    updateSentAndReceivedUsernames();
-
-
-    if (currentUserResult?.value?.currentUser) {
-      const currentUserData = currentUserResult?.value?.currentUser;
-      users.value = usersResult?.value?.users?.filter(user => user.id !== currentUserData?.id) || [];
-
-      
-      
-      // Process battles for sent usernames
-     
-    }
-    
-  } catch (err) {
-    fetchError.value = err.message;
-  }
-});
-
-const handleAccept = async (request) => {
-  try {
-    await acceptBattle( {battleId: request.battleId} );
-    console.log(`Battle request from ${request.username} accepted`);
-
-    
-
-    // Refetch battles to update the tables
-    //er.push({name: 'home'});
-    router.push({ name: 'battle-hist' }); 
-    await fetchUserBattles();
-    updateSentAndReceivedUsernames();
-  } catch (err) {
-    console.error('Error accepting battle request:', err.message);
-  }
-};
-
-const handleReject = async (request, index) => {
-  try {
-    console.log(request.battleId);
-    await rejectBattle( { battleId: request.battleId });
-    console.log(`Battle request from ${request.username} rejected`);
-
-    // Remove the request from the list
-    receivedUsernames.value.splice(index, 1);
-    updateSentAndReceivedUsernames();
-
-    // Optionally, you might want to refetch battles here
-    // await fetchUserBattles();
-  } catch (err) {
-    console.error('Error rejecting battle request:', err.message);
-    await fetchUserBattles();
-    updateSentAndReceivedUsernames();
-  }
-};
-
-
- 
-
-//     const submitRequest = async () => {
-//   if (selectedUserId.value !== '') {
-//     const user = users.value.find(u => u.id === selectedUserId.value);
-    
-//     if (user && !sentUsernames.value.some(u => u.username === user.username)) {
-//       try {
-//         await requestBattle({  userId: user.id } );
-//         console.log('Battle request sent to:', user.username);
-
-//         // Refetch battles to update the tables
-//         await fetchUserBattles();
-//       } catch (err) {
-//         console.error('Error sending battle request:', err.message);
-//       }
-//     } else if (user) {
-//       console.error('Request already sent to this user');
-//     }
-//     selectedUserId.value = '';
-//   } else {
-//     console.error('No user selected');
-//   }
-// };
-
-const submitRequest = async () => {
-  if (selectedUserId.value !== '') {
-    const user = users?.value?.find(u => u.id === selectedUserId?.value);
-
-    // Check if the user is already in the sentUsernames or receivedUsernames lists
-    const isRequestSent = sentUsernames?.value?.some(u => u.username === user.username);
-    const isRequestReceived = receivedUsernames?.value?.some(u => u.username === user.username);
-
-    if (!isRequestSent && !isRequestReceived) {
+    onMounted(async () => {
       try {
-        await requestBattle({ userId: user.id });
-        console.log('Battle request sent to:', user.username);
-
-        // Refetch battles to update the tables
+        await fetchUsers();
+        await fetchCurrentUser();
         await fetchUserBattles();
         updateSentAndReceivedUsernames();
-      } catch (err) {
-        console.error('Error sending battle request:', err.message);
-      }
-    } else {
-      // Display a pop-up message saying request already exists
-      alert('A request already exists with this user.');
-    }
-    selectedUserId.value = '';
-  } else {
-    console.error('No user selected');
-  }
-};
 
-// const updateSentAndReceivedUsernames = () => {
-//   const currentUserData = currentUserResult?.value?.currentUser;
-//   if (currentUserData) {
-
-//     console.log('Battles playerOne:', userBattlesResult?.value?.userBattles);
-//     console.log('curent name:', currentUserData?.username);
-//     // Filter battles for sent requests
-//     sentUsernames.value = userBattlesResult?.value?.userBattles
-//       .filter(battle => battle.playerOne?.username === currentUserData?.username && 
-//                         battle.playerOne?.battles.some(b => b.state === 'REQUESTED'))
-//       .map(battle => ({ username: battle.playerTwo?.username, status: 'REQUESTED' }));
-
-//     // Filter battles for received requests
-//     console.log('sentusernames:', sentUsernames);
-//     receivedUsernames.value = userBattlesResult.value?.userBattles
-//       .filter(battle => battle.playerTwo?.username === currentUserData.username && 
-//                         battle.playerTwo?.battles.some(b => b.state === 'REQUESTED'))
-//       .map(battle => ({
-//           username: battle.playerOne?.username,
-//           status: 'REQUESTED',
-//           battleId: battle.id
-//         }));
-//   }
-// };
-
-const updateSentAndReceivedUsernames = () => {
-  const currentUserData = currentUserResult?.value?.currentUser;
-
-  if (currentUserData && currentUserData.battles) {
-    // Reset the arrays
-    sentUsernames.value = [];
-    receivedUsernames.value = [];
-
-    currentUserData.battles.forEach(battle => {
-      if (battle.state === 'REQUESTED') {
-        if (battle.playerOne?.username === currentUserData.username) {
-          // Current user is playerOne, so this is a sent request
-          sentUsernames.value.push({
-            username: battle.playerTwo?.username,
-            status: 'REQUESTED'
-          });
-        } else if (battle.playerTwo?.username === currentUserData.username) {
-          // Current user is playerTwo, so this is a received request
-          receivedUsernames.value.push({
-            username: battle.playerOne?.username,
-            status: 'REQUESTED',
-            battleId: battle.id // Assuming each battle has an 'id' field
-          });
+        if (currentUserResult?.value?.currentUser) {
+          const currentUserData = currentUserResult?.value?.currentUser;
+          users.value = usersResult?.value?.users?.filter(user => user.id !== currentUserData?.id) || []; a
         }
+
+      } catch (err) {
+        fetchError.value = err.message;
       }
     });
 
-    console.log('Sent Usernames:', sentUsernames.value);
-    console.log('Received Usernames:', receivedUsernames.value);
-  }
-};
+    const handleAccept = async (request) => {
+      try {
+        await acceptBattle({ battleId: request.battleId });
+        console.log(`Battle request from ${request.username} accepted`);
 
+        // Refetch battles to update the tables
+        router.push({ name: 'battle-hist' });
+        await fetchUserBattles();
+        updateSentAndReceivedUsernames();
+      } catch (err) {
+        console.error('Error accepting battle request:', err.message);
+      }
+    };
 
+    const handleReject = async (request, index) => {
+      try {
+        console.log(request.battleId);
+        await rejectBattle({ battleId: request.battleId });
+        console.log(`Battle request from ${request.username} rejected`);
 
+        // Remove the request from the list
+        receivedUsernames.value.splice(index, 1);
+        updateSentAndReceivedUsernames();
 
+        // Optionally, you might want to refetch battles here
+        // await fetchUserBattles();
+      } catch (err) {
+        console.error('Error rejecting battle request:', err.message);
+        await fetchUserBattles();
+        updateSentAndReceivedUsernames();
+      }
+    };
+
+    const submitRequest = async () => {
+      if (selectedUserId.value !== '') {
+        const user = users?.value?.find(u => u.id === selectedUserId?.value);
+
+        // Check if the user is already in the sentUsernames or receivedUsernames lists
+        const isRequestSent = sentUsernames?.value?.some(u => u.username === user.username);
+        const isRequestReceived = receivedUsernames?.value?.some(u => u.username === user.username);
+
+        if (!isRequestSent && !isRequestReceived) {
+          try {
+            await requestBattle({ userId: user.id });
+            console.log('Battle request sent to:', user.username);
+
+            // Refetch battles to update the tables
+            await fetchUserBattles();
+            updateSentAndReceivedUsernames();
+          } catch (err) {
+            console.error('Error sending battle request:', err.message);
+          }
+        } else {
+          // Display a pop-up message saying request already exists
+          alert('A request already exists with this user.');
+        }
+        selectedUserId.value = '';
+      } else {
+        console.error('No user selected');
+      }
+    };
+
+    const updateSentAndReceivedUsernames = () => {
+      const currentUserData = currentUserResult?.value?.currentUser;
+
+      if (currentUserData && currentUserData.battles) {
+        // Reset the arrays
+        sentUsernames.value = [];
+        receivedUsernames.value = [];
+
+        currentUserData.battles.forEach(battle => {
+          if (battle.state === 'REQUESTED') {
+            if (battle.playerOne?.username === currentUserData.username) {
+              // Current user is playerOne, so this is a sent request
+              sentUsernames.value.push({
+                username: battle.playerTwo?.username,
+                status: 'REQUESTED'
+              });
+            } else if (battle.playerTwo?.username === currentUserData.username) {
+              // Current user is playerTwo, so this is a received request
+              receivedUsernames.value.push({
+                username: battle.playerOne?.username,
+                status: 'REQUESTED',
+                battleId: battle.id // Assuming each battle has an 'id' field
+              });
+            }
+          }
+        });
+
+        console.log('Sent Usernames:', sentUsernames.value);
+        console.log('Received Usernames:', receivedUsernames.value);
+      }
+    };
 
     return {
       users,
@@ -364,99 +290,15 @@ const updateSentAndReceivedUsernames = () => {
   }
 };
 
-// const updateUserBattles = async () => {
-//       try {
-//         await fetchUserBattles();
-
-//         const currentUserData = currentUserResult.value?.currentUser;
-//         if (currentUserData) {
-//           const battles = userBattlesResult.value?.userBattles || [];
-          
-//           // Process battles for sent usernames
-//           sentUsernames.value = battles
-//             .filter(battle => battle.playerOne.username === currentUserData.username && battle.state === 'REQUESTED')
-//             .map(battle => ({ username: battle.playerTwo.username, status: 'REQUESTED' }));
-
-//           // Process battles for received usernames
-//           receivedUsernames.value = battles
-//             .filter(battle => battle.playerTwo.username === currentUserData.username && battle.state === 'REQUESTED')
-//             .map(battle => ({
-//               username: battle.playerOne.username,
-//               status: 'REQUESTED',
-//               battleId: battle.id
-//             }));
-//         }
-//       } catch (err) {
-//         console.error('Error updating user battles:', err);
-//       }
-//     };
-
-//     onMounted(async () => {
-//       await fetchUsers();
-//       await fetchCurrentUser();
-//       await updateUserBattles();
-//     });
-
-//     const handleAccept = async (request) => {
-//       try {
-//         await acceptBattle({battleId: request.battleId });
-//         await updateUserBattles();
-//         router.push({ name: 'battle-hist' });
-//       } catch (err) {
-//         console.error('Error accepting battle request:', err.message);
-//       }
-//     };
-
-//     const handleReject = async (request, index) => {
-//       try {
-//         await rejectBattle({ battleId: request.battleId });
-//         await updateUserBattles();
-//       } catch (err) {
-//         console.error('Error rejecting battle request:', err.message);
-//       }
-//     };
-
-//     const submitRequest = async () => {
-//       if (selectedUserId.value !== '') {
-//         const user = users.value.find(u => u.id === selectedUserId.value);
-//         if (user && !sentUsernames.value.some(u => u.username === user.username)) {
-//           try {
-//             await requestBattle({ userId: user.id  });
-//             await updateUserBattles();
-//           } catch (err) {
-//             console.error('Error sending battle request:', err.message);
-//           }
-//         } else {
-//           console.error('Request already sent to this user');
-//         }
-//         selectedUserId.value = '';
-//       } else {
-//         console.error('No user selected');
-//       }
-//     };
-
-//     console.log(users.value);
-
-//     return {
-//       users,
-//       selectedUserId,
-//       sentUsernames,
-//       receivedUsernames,
-//       fetchError,
-//       handleAccept,
-//       handleReject,
-//       submitRequest
-//     };
-//   }
-// };
 </script>
 
 
 
 <style scoped>
 .input-long {
-  width: 300px; /* Adjust as needed */
-  margin-right: 20px; 
+  width: 300px;
+  /* Adjust as needed */
+  margin-right: 20px;
 }
 
 .scrollable-table {
@@ -469,15 +311,18 @@ table {
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: left;
 }
 
 th {
-  width: 50%; /* Each column will take half the width of the table */
-  font-weight: bold; /* Make headings bold */
+  width: 50%;
+  /* Each column will take half the width of the table */
+  font-weight: bold;
+  /* Make headings bold */
   background-color: #f2f2f2;
 }
 
@@ -492,6 +337,5 @@ tr:hover {
 .action-button {
   /* margin-left: 10px; */
   margin-right: 10px;
-}
-</style>
+}</style>
 

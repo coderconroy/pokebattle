@@ -7,23 +7,14 @@
       <span v-if="addonLeftIcon" class="input-group-prepend">
         <i :class="addonLeftIcon" class="input-group-text"></i>
       </span>
-      <input
-        :value="modelValue"
-        @input="$emit('update:modelValue', $event.target.value)"
-        v-bind="$attrs"
-        class="form-control"
-        :aria-describedby="computedAriaDescribedby"
-      />
+      <input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" v-bind="$attrs"
+        class="form-control" :aria-describedby="computedAriaDescribedby" />
       <span v-if="addonRightIcon" class="input-group-append">
         <i :class="addonRightIcon" class="input-group-text"></i>
       </span>
     </div>
-    <input v-else
-      :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
-      v-bind="$attrs"
-      class="form-control"
-    />
+    <input v-else :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" v-bind="$attrs"
+      class="form-control" />
   </div>
 </template>
 
@@ -57,7 +48,8 @@ export default {
   /* Styles for the form group */
 }
 
-.input-group-prepend, .input-group-append {
+.input-group-prepend,
+.input-group-append {
   /* Styles for input group addons */
 }
 

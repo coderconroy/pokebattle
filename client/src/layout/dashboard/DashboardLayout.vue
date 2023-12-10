@@ -4,22 +4,11 @@
       <template v-slot:links>
         <sidebar-link to="/home" name="Home" icon="ti-home" />
         <sidebar-link to="/profile" name="User Profile" icon="ti-user" />
-        <sidebar-link
-          to="/card-collection"
-          name="Card Collection"
-          icon="ti-view-list-alt"
-        />
-        <drop-down
-          class="nav-item"
-          title="BATTLE PAGE"
-          title-classes="nav-link"
-          icon="ti-game"
-        >
+        <sidebar-link to="/card-collection" name="Card Collection" icon="ti-view-list-alt"/>
+        <drop-down class="nav-item" title="BATTLE PAGE" title-classes="nav-link" icon="ti-game">
         <a class="dropdown-item" @click.prevent="redirectToBattleReqPage">Battle Requests</a>
         <a class="dropdown-item" @click.prevent="redirectToBattleHistPage">Battles History</a>
-        <!-- <a class="dropdown-item" @click.prevent="redirectToBattlePage">Active Battle Page</a> -->
         </drop-down>
-        <!-- <sidebar-link to="/notifications" name="Notifications" icon="ti-bell" /> -->
         <sidebar-link to="/poke-discovered" name="Poke Discovered" icon="ti-gift" />
       </template>
       <mobile-menu>
@@ -31,10 +20,7 @@
     </side-bar>
     <div class="main-panel">
       <top-navbar></top-navbar>
-
-      <!-- <router-view></router-view>  -->
       <dashboard-content @click="toggleSidebar"> </dashboard-content>
-
     </div>
   </div>
 </template>

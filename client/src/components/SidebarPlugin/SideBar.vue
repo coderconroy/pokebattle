@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="sidebar"
-    :data-background-color="backgroundColor"
-    :data-active-color="activeColor"
-  >
+  <div class="sidebar" :data-background-color="backgroundColor" :data-active-color="activeColor">
     <!--
             Tip 1: you can change the color of the sidebar's background using: data-background-color="white | black | darkblue"
             Tip 2: you can change the color of the active button using the data-active-color="primary | info | success | warning | danger"
@@ -22,13 +18,8 @@
       <ul class="nav">
         <!--By default vue-router adds an active class to each route link. This way the links are colored when clicked-->
         <slot name="links">
-          <sidebar-link
-            v-for="(link, index) in sidebarLinks"
-            :key="index"
-            :to="link.path"
-            :name="link.name"
-            :icon="link.icon"
-          >
+          <sidebar-link v-for="(link, index) in sidebarLinks" :key="index" :to="link.path" :name="link.name"
+            :icon="link.icon">
           </sidebar-link>
         </slot>
       </ul>
@@ -118,7 +109,8 @@ export default {
       if (index > -1) {
         this.links.splice(index, 1);
       }
-      this.findActiveLink(); // Update active link index after removing a link
+      // Update active link index after removing a link
+      this.findActiveLink();
     },
     isActive(path) {
       // Implement your logic to determine if a link is active based on the current route path
@@ -136,7 +128,8 @@ export default {
 
 
 <style>
-.sidebar { /* Replace with your actual sidebar class if different */
+.sidebar {
+  /* Replace with your actual sidebar class if different */
   display: flex;
   flex-direction: column;
   align-items: center;

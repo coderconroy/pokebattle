@@ -3,16 +3,17 @@
         <div class="login-form-container">
             <div class="form-header">
                 <img src="../assets/pokemon_logo.png" alt="Pokémon Logo" class="logo" />
-                <!-- <h2>Welcome</h2> -->
             </div>
             <form class="login-form" @submit.prevent="onSubmit">
                 <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
                 <div class="form-group">
-                    <input type="text" placeholder="Enter your first name" class="form-control" v-model="userData.firstName" />
+                    <input type="text" placeholder="Enter your first name" class="form-control"
+                        v-model="userData.firstName" />
                 </div>
 
                 <div class="form-group">
-                    <input type="text" placeholder="Enter your last name" class="form-control" v-model="userData.lastName" />
+                    <input type="text" placeholder="Enter your last name" class="form-control"
+                        v-model="userData.lastName" />
                 </div>
 
                 <div class="form-group">
@@ -24,7 +25,8 @@
                 </div>
 
                 <div class="form-group">
-                    <input type="password" placeholder="Enter your password" class="form-control" v-model="userData.password" />
+                    <input type="password" placeholder="Enter your password" class="form-control"
+                        v-model="userData.password" />
                 </div>
 
                 <button type="submit" class="signup-button">Sign-up</button>
@@ -156,13 +158,15 @@ export default {
 }
 
 .error-message {
-  font-weight: bold;
-  color: black;
+    font-weight: bold;
+    color: black;
 }
 
 .signup-button {
-    background-color: #ffcb05; /* Pokémon yellow */
-    color: #3b4cca; /* Pokémon blue */
+    background-color: #ffcb05;
+    /* Pokémon yellow */
+    color: #3b4cca;
+    /* Pokémon blue */
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
@@ -175,8 +179,10 @@ export default {
 }
 
 .login-prompt {
-    text-align: center; /* Center the text */
-    font-size: 16px; /* Adjust the font size as needed */
+    text-align: center;
+    /* Center the text */
+    font-size: 16px;
+    /* Adjust the font size as needed */
     font-weight: bold;
     margin-bottom: 5px;
     color: black;
@@ -184,16 +190,23 @@ export default {
 
 .login-button {
     /* Existing styles... */
-    display: flex; /* Use flexbox for alignment */
+    display: flex;
+    /* Use flexbox for alignment */
     background-color: #ffcb05;
-    justify-content: center; /* Center horizontally */
-    align-items: center; /* Center vertically */
-    text-decoration: none; /* Remove underline from link */
+    justify-content: center;
+    /* Center horizontally */
+    align-items: center;
+    /* Center vertically */
+    text-decoration: none;
+    /* Remove underline from link */
     font-size: 16px;
     font-weight: bold;
-    height: 40px; /* Specify a height */
-    line-height: 40px; /* Line height to match the button height for vertical centering */
-    padding: 0 15px; /* Horizontal padding (adjust as needed) */
+    height: 40px;
+    /* Specify a height */
+    line-height: 40px;
+    /* Line height to match the button height for vertical centering */
+    padding: 0 15px;
+    /* Horizontal padding (adjust as needed) */
     color: black;
 }
 

@@ -10,10 +10,8 @@ import CardCollection from "@/pages/CardCollection.vue";
 import BattleRequests from "@/pages/BattleRequests.vue";
 import BattleHistory from "@/pages/BattleHistory.vue";
 import BattlePage from "@/pages/BattlePage.vue";
-// import Notifications from "@/pages/UserNotifications.vue";
 import PokeDiscovered from "@/pages/PokeDiscovered.vue";
 import UserHome from "@/pages/HomePage.vue";
-//import BattlePage from "@/pages/BattlePage.vue"
 
 import { isAuthenticated } from '@/pages/UserLogin.vue';
 
@@ -91,11 +89,6 @@ const routes = [
         name: 'battle-page',
         component: BattlePage,
       },
-      // {
-      //   path: '/notifications',
-      //   name: 'notifications',
-      //   component: Notifications,
-      // },
       {
         path: '/poke-discovered',
         name: 'poke-discovered',
@@ -105,11 +98,9 @@ const routes = [
   },
 ];
 
-
 const router = createRouter({
   history: createWebHistory(), //to decide the type of url we want, hash url or normal Url
   routes,
-
 })
 
 export default router;

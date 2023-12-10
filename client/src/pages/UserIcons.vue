@@ -147,7 +147,6 @@
               <span class="icon-name"> ti-exchange-vertical</span>
             </div>
           </div>
-          <!-- Arrows Icons -->
 
           <h3>Web App Icons</h3>
 

@@ -1,11 +1,5 @@
 <template>
-  <component
-    :is="tag"
-    :type="nativeType"
-    :disabled="disabled || loading"
-    class="btn"
-    :class="buttonClasses"
-  >
+  <component :is="tag" :type="nativeType" :disabled="disabled || loading" class="btn" :class="buttonClasses">
     <slot name="loading">
       <i v-if="loading" class="fa fa-spinner fa-spin"></i>
     </slot>
