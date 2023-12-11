@@ -7,23 +7,22 @@ PokéBattle QuickPlay is an online Pokémon battle platform that combines elemen
 - **Frontend**: Vue.js
 - **Backend**: Node.js, Express
 - **API**: GraphQL
-- **Database**: PostgreSQL
-- **External APIs**: Pokémon TCG Database API for card information
+- **Database**: MongoDB
 
 ## Getting Started
 1. **Clone the Repository**: `git clone https://github.com/coderconroy/ee547-final-project.git`
 2. **Install Dependencies**:
    - Navigate to `/client` and `/server` directories and run `npm install` in each.
-3. **Environment Setup**:
-   - Set up environment variables as needed for database connections and API keys.
-4. **Running the Application**:
+3. **Running the Application**:
+   - Ensure a MongoDB instance is running on your system.
    - Start the backend server: `npm start` in the `/server` directory.
    - Start the Vue.js frontend: `npm run serve` in the `/client` directory.
 
 ## Folder Structure
 - `/client`: Contains the Vue.js frontend application.
+    - `/public`: Contains static assets for frontend.
+    - `/src`: Contains primary source files for frontend.
 - `/server`: Node.js and Express backend.
-  - `/graphql`: GraphQL schema and resolvers.
-  - `/models`: PostgreSQL database models.
-  - `/controllers`: Business logic of the application.
-- `/docs`: Project documentation and resources.
+  - `/config`: Connection parameters for MongoDB
+  - `/data`: JSON files with card data placed in this directory will be added to the database on server start.
+  - `/src`: Contains primary source files for frontend.
