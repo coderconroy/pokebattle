@@ -20,7 +20,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Current User's Cards -->
             <div class="cards-section">
                 <h3 class="card-title">Your Cards</h3>
@@ -46,7 +45,6 @@
             </div>
         </div>
         <div v-else-if="fetchError">Error: {{ fetchError }}</div>
-
         <!-- Modal for selected card -->
         <div v-if="selectedCard" class="modal">
             <div class="modal-content">
@@ -54,7 +52,6 @@
                 <p>Selected "{{ selectedCard.card.name }}" card</p>
             </div>
         </div>
-
         <!-- UI for card selection -->
         <div v-if="showCardSelector" class="card-selection-ui">
             <div class="cards-row">
@@ -68,7 +65,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Dialog for round results -->
         <div v-if="showDialog && roundDetails?.value" class="popup">
             <div class="popup-content">
@@ -79,9 +75,7 @@
                 <p>Round End HP: {{ roundDetails?.value?.roundEndHp }}</p>
             </div>
         </div>
-
         <round-status-mini-bar :rounds="battleDetails?.rounds" />
-
         <!-- Dialog for opponent's turn -->
         <div v-if="showOppTurnDialog" class="modal">
             <div class="modal-content">
@@ -89,16 +83,15 @@
                 <button @click="goToHome" class="small-home-button">Go to Home</button>
             </div>
         </div>
-
         <div v-if="gameEnded" class="modal">
             <div class="modal-content">
                 <p>Winner is: {{ winner }}</p>
                 <button @click="goToHome" class="small-home-button">Go to Home</button>
             </div>
         </div>
-
     </div>
 </template>
+
 
 <script>
 import { ref, onMounted, computed, onBeforeUnmount } from "vue";
@@ -359,14 +352,11 @@ export default {
         const roundDetails = ref(null);
         const oppTurnDialogMessage = ref('');
         const showOppTurnDialog = ref(false);
-
         const { result, error, refetch } = useQuery(BATTLE_QUERY, { battleId: props.battleId });
-
         const { result: currentUserResult } = useQuery(CURRENT_USER_QUERY);
         const { mutate: playCard } = useMutation(PLAY_CARD_MUTATION, {
             onCompleted: (data) => {
                 console.log("Play card mutation completed", data);
-
             },
             onError: (error) => {
                 console.error("Error playing card:", error);
@@ -400,8 +390,6 @@ export default {
                     handlePlayerTwoAlgorithm();
                 }
                 console.log(currentUserCards.value);
-
-
             } catch (err) {
                 fetchError.value = err.message;
             } finally {
@@ -421,7 +409,6 @@ export default {
                 clearInterval(intervalId.value);
             }
         });
-
 
         const { mutate: viewBattle } = useMutation(VIEW_BATTLE_MUTATION, {
             onCompleted: (data) => {
@@ -445,7 +432,6 @@ export default {
                 if (!previousRound.playerOneViewed) {
                     resultMessage.value = `Previous Round Result: Round ${rounds.length - 1}: Your opponent, ${battleDetails.value.playerTwo.username
                         }, played card ${previousRound.playerTwoCard.battleCard.card.name}`;
-
                 }
             }
 
@@ -478,9 +464,7 @@ export default {
                 // Check if you have viewed the result of the previous round
                 if (!previousRound.playerTwoViewed) {
                     resultMessage.value = `Previous Round Result: Round ${rounds.length - 1}: Your opponent, ${battleDetails.value.playerOne.username
-                        }, played card ${previousRound.playerOneCard.battleCard.card.name}`;
-                    // Tell the server you have now see the result of the previous round
-                    // await viewBattle({ battleId: props.battleId });
+                        }, played card ${previousRound.playerOneCard.battleCard.card.name}`;;
                 }
             }
 
@@ -515,7 +499,6 @@ export default {
             roundDetails.value = round;
             showDialog.value = true;
             console.log("dialog");
-
             setTimeout(() => {
                 showDialog.value = false;
             }, 10000);
@@ -523,7 +506,7 @@ export default {
 
         const closeDialog = () => {
             showDialog.value = false;
-            roundDetails.value = null; // Optionally reset the round details
+            roundDetails.value = null;
         };
 
         const currentUserIsPlayerOne = computed(() => {
@@ -553,7 +536,6 @@ export default {
             return allPlayerOneCardsDead || allPlayerTwoCardsDead;
         });
 
-
         const winner = computed(() => {
             if (!gameEnded.value)
                 return null;
@@ -563,15 +545,10 @@ export default {
         });
 
         const goToHome = () => {
-            router.push('/home'); // Replace '/home' with the path to your home page
+            router.push('/home');
         };
 
         const hovering = ref(false);
-        //const selectedCard = ref(null);
-
-        const selectCard = (card) => {
-            selectedCard.value = card;
-        };
 
         const closeModal = () => {
             selectedCard.value = null;
@@ -627,7 +604,6 @@ export default {
         };
 
         const processRoundResults = (roundResults) => {
-            // Example logic - modify according to your actual data structure
             otherUserCards.forEach((card) => {
                 if (
                     roundResults.playerOneCard.battleCard?.id === card.id ||
@@ -644,35 +620,7 @@ export default {
         // Method to set the selected card
         const setSelectedCard = (card) => {
             selectedCard.value = card;
-            // You might trigger some UI change here to show the card is selected
         };
-
-        // const updateRevealedCards = () => {
-        //     if (battleDetails?.value && battleDetails?.value?.rounds) {
-        //         const lastRound = battleDetails?.value?.rounds[battleDetails.value?.rounds?.length - 1];
-
-        //         otherUserCards?.value.forEach((card) => {
-        //             if (
-        //                 lastRound?.playerOneCard?.battleCard?.id === card.id ||
-        //                 lastRound?.playerTwoCard?.battleCard?.id === card.id
-        //             ) {
-        //                 card.revealed = true;
-        //             }
-        //         });
-
-
-        //     }
-
-        //     console.log("revealed cards");
-
-        //     console.log(otherUserCards.value);
-
-
-
-
-        // };
-
-
 
         console.log(showDialog.value);
 
@@ -684,7 +632,6 @@ export default {
             currentUserCards,
             otherUser,
             otherUserCards,
-            //selectCard,
             hovering,
             selectedCard,
             closeModal,
@@ -719,13 +666,11 @@ export default {
             oppTurnDialogMessage,
             showOppTurnDialog,
             isCardDead
-
-
-            //closeRoundResultsDialog
         };
     },
 };
 </script>
+
 
 <style scoped>
 .state-message-box,
@@ -802,12 +747,6 @@ export default {
     /* Optional: Rounds the corners of the label background */
 }
 
-/* .modal {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-} */
-
 .modal {
     display: flex;
     position: fixed;
@@ -821,14 +760,6 @@ export default {
     overflow: auto;
     background-color: rgba(0, 0, 0, 0.4);
 }
-
-/* .modal-content {
-  width: 50%;
-  padding: 20px;
-  background-color: white;
-  border-radius: 5px;
-  box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
-} */
 
 .modal-content {
     width: 50%;
@@ -1061,4 +992,6 @@ popup {
     /* Light grey background on hover */
     cursor: pointer;
     /* Changes the cursor to a pointer */
-}</style>
+}
+</style>
+

@@ -14,7 +14,6 @@
     <div v-if="fetchError" class="error-message">
       Error fetching users: {{ fetchError }}
     </div>
-
     <!-- Sent Requests Table -->
     <h3>Sent Requests</h3>
     <div class="scrollable-table">
@@ -33,7 +32,6 @@
         </tbody>
       </table>
     </div>
-
     <!-- Received Requests Table -->
     <h3>Received Requests</h3>
     <div class="scrollable-table">
@@ -50,7 +48,6 @@
             <td>
               <button @click="handleAccept(request)" class="action-button">Accept</button>
               <button @click="() => handleReject(request, index)" class="action-button">Reject</button>
-
             </td>
           </tr>
         </tbody>
@@ -58,6 +55,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import { ref, onMounted } from 'vue';
@@ -67,87 +65,86 @@ import { useRouter } from 'vue-router';
 
 export default {
   setup() {
-    const USERS_QUERY = gql` 
-      query Query {
-        users {
-          username
-          id
-        }
-      }
-    `;
-
-    const CURRENT_USER_QUERY = gql`
-  query CurrentUser {
-  currentUser {
-    battles {
-      state
-      playerOne {
+  const USERS_QUERY = gql` 
+    query Query {
+      users {
         username
+        id
       }
-      playerTwo {
-        username
-      }
-      id
     }
-    username
-  }
-}`;
+  `;
 
-    const REQUEST_BATTLE_MUTATION = gql`
-      mutation RequestBattle($userId: ID!) {
-        requestBattle(userId: $userId) {
+  const CURRENT_USER_QUERY = gql`
+    query CurrentUser {
+    currentUser {
+      battles {
+        state
+        playerOne {
+          username
+        }
+        playerTwo {
+          username
+        }
+        id
+      }
+      username
+    }
+  }`;
+
+  const REQUEST_BATTLE_MUTATION = gql`
+    mutation RequestBattle($userId: ID!) {
+      requestBattle(userId: $userId) {
+        id
+        playerOne {
           id
-          playerOne {
-            id
-            username
-            battles {
+          username
+          battles {
             state
           }
         }
       }
     }
-    `;
+  `;
 
-    const USER_BATTLES_QUERY = gql`
-  query Query {
-    userBattles {
-      playerTwo {
-        username
-        battles {
-          state
+  const USER_BATTLES_QUERY = gql`
+    query Query {
+      userBattles {
+        playerTwo {
+          username
+          battles {
+            state
+          } 
         }
-        
+        playerOne {
+          username
+          battles {
+            state
+          }
+        }
+        id
       }
-      playerOne {
-        username
-        battles {
-          state
+    }
+  `;
+
+  const ACCEPT_BATTLE_MUTATION = gql`
+    mutation AcceptBattle($battleId: ID!) {
+      acceptBattle(battleId: $battleId) {
+        playerOne {
+          username
         }
       }
-      id
     }
-  }
-`;
+  `;
 
-    const ACCEPT_BATTLE_MUTATION = gql`
-  mutation AcceptBattle($battleId: ID!) {
-    acceptBattle(battleId: $battleId) {
-      playerOne {
-        username
+  const REJECT_BATTLE_MUTATION = gql`
+    mutation RejectBattle($battleId: ID!) {
+      rejectBattle(battleId: $battleId) {
+        playerTwo {
+          username
+        }
       }
     }
-  }
-`;
-
-    const REJECT_BATTLE_MUTATION = gql`
-  mutation RejectBattle($battleId: ID!) {
-    rejectBattle(battleId: $battleId) {
-      playerTwo {
-        username
-      }
-    }
-  }
-`;
+  `;
 
     const currentUser = ref(null);
     const users = ref([]);
@@ -155,7 +152,6 @@ export default {
     const fetchError = ref(null);
     const sentUsernames = ref([]);
     const receivedUsernames = ref([]);
-
 
     const { result: usersResult, refetch: fetchUsers } = useQuery(USERS_QUERY);
     const { result: currentUserResult, refetch: fetchCurrentUser } = useQuery(CURRENT_USER_QUERY);
@@ -174,9 +170,8 @@ export default {
 
         if (currentUserResult?.value?.currentUser) {
           const currentUserData = currentUserResult?.value?.currentUser;
-          users.value = usersResult?.value?.users?.filter(user => user.id !== currentUserData?.id) || []; a
+          users.value = usersResult?.value?.users?.filter(user => user.id !== currentUserData?.id) || [];
         }
-
       } catch (err) {
         fetchError.value = err.message;
       }
@@ -187,7 +182,6 @@ export default {
         await acceptBattle({ battleId: request.battleId });
         console.log(`Battle request from ${request.username} accepted`);
 
-        // Refetch battles to update the tables
         router.push({ name: 'battle-hist' });
         await fetchUserBattles();
         updateSentAndReceivedUsernames();
@@ -206,8 +200,6 @@ export default {
         receivedUsernames.value.splice(index, 1);
         updateSentAndReceivedUsernames();
 
-        // Optionally, you might want to refetch battles here
-        // await fetchUserBattles();
       } catch (err) {
         console.error('Error rejecting battle request:', err.message);
         await fetchUserBattles();
@@ -265,7 +257,7 @@ export default {
               receivedUsernames.value.push({
                 username: battle.playerOne?.username,
                 status: 'REQUESTED',
-                battleId: battle.id // Assuming each battle has an 'id' field
+                battleId: battle.id
               });
             }
           }
@@ -289,9 +281,7 @@ export default {
     };
   }
 };
-
 </script>
-
 
 
 <style scoped>
@@ -337,5 +327,6 @@ tr:hover {
 .action-button {
   /* margin-left: 10px; */
   margin-right: 10px;
-}</style>
+}
+</style>
 
